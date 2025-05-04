@@ -33,7 +33,12 @@ all: deploy-frontend
 # 1. Build Flutter Web App
 build-flutter:
 	@echo "Building Flutter web application..."
-	cd $(FRONTEND_APP_DIR) && flutter build web --release
+	cd $(FRONTEND_APP_DIR) && flutter build web --dart-define-from-file=.env.prod
+	@echo "Flutter build complete."
+
+build-flutter-dev:
+	@echo "Building Flutter web application..."
+	cd $(FRONTEND_APP_DIR) && flutter build web --dart-define-from-file=.env.dev
 	@echo "Flutter build complete."
 
 # 2. Build Docker Image
@@ -71,6 +76,7 @@ deploy-frontend:
 	sed -e "s|{{DOCKER_REPO}}/{{FRONTEND_IMAGE_NAME}}:{{TAG}}|$(FRONTEND_IMG_TAG)|g" \
 	    -e "s|{{FRONTEND_DOMAIN}}|$(FRONTEND_DOMAIN)|g" | \
 	kubectl apply -f -
+	kubectl rollout restart deployment incentivize-this-frontend
 	@echo "Frontend deployment applied."
 
 # Delete Frontend from Kubernetes
