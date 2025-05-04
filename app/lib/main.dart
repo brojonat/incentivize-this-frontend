@@ -3,11 +3,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'home_screen.dart';
 import 'provider_setup.dart';
 import 'theme.dart';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  final envFileName = kReleaseMode ? ".env.prod" : ".env.dev";
+  await dotenv.load(fileName: envFileName);
 
   runApp(const MyApp());
 }

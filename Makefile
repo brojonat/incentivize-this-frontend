@@ -4,10 +4,9 @@
 SHELL := /bin/bash
 
 # === Configuration ===
-# !!! REPLACE THESE PLACEHOLDERS with your actual values !!!
-DOCKER_REPO         ?= brojonat  # e.g., gcr.io/your-project or docker.io/your-username
+DOCKER_REPO         ?= brojonat
 FRONTEND_IMAGE_NAME ?= incentivize-this-frontend
-FRONTEND_DOMAIN     ?= incentivizethis.com # Your frontend domain
+FRONTEND_DOMAIN     ?= incentivizethis.com
 FRONTEND_K8S_DIR    ?= k8s/prod
 FRONTEND_DOCKERFILE ?= k8s/Dockerfile
 FRONTEND_APP_DIR    ?= app
@@ -19,7 +18,7 @@ FRONTEND_IMG_TAG := $(DOCKER_REPO)/$(FRONTEND_IMAGE_NAME):$(GIT_HASH)
 # Load environment variables from a file (optional, but good practice)
 # Example: Create a .env.frontend.prod file with DOCKER_REPO=your_repo
 #          Or set them in your CI environment
-ENV_FILE ?= .env.frontend.prod
+ENV_FILE ?= app/.env.prod
 define setup_env
 	$(eval include $(1))
 	$(eval export)
@@ -83,12 +82,12 @@ delete-frontend:
 # === Operations ===
 
 # View logs for the frontend deployment
-logs-frontend:
+logs:
 	@echo "Tailing logs for frontend deployment..."
 	kubectl logs -f deployment/incentivize-this-frontend --tail=50
 
 # Check status of the frontend deployment
-status-frontend:
+status:
 	@echo "=== Frontend Deployment Status ==="
 	kubectl get deployment incentivize-this-frontend -o wide
 	@echo "\n=== Frontend Service Status ==="
@@ -99,7 +98,7 @@ status-frontend:
 	kubectl get pods -l app=incentivize-this-frontend
 
 # Restart the frontend deployment
-restart-frontend:
+restart:
 	@echo "Restarting frontend deployment..."
 	kubectl rollout restart deployment incentivize-this-frontend
 	@echo "Rollout restart initiated."
