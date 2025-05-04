@@ -1,0 +1,15 @@
+# k8s/prod/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+# No secretGenerator needed typically for the frontend build artifact,
+# unless you need to pass runtime config to nginx.
+
+# You might add commonLabels or namePrefix/Suffix if desired.
+commonLabels:
+  app.kubernetes.io/name: incentivize-this-frontend

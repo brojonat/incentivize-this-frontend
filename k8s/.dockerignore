@@ -1,0 +1,13 @@
+# Flutter specific
+.dart_tool/
+.idea/
+.packages
+build/
+app/build/ # Exclude the whole build dir initially, Dockerfile copies from it later
+!app/build/web # Un-ignore the specific web output we need
+
+# OS specific
+.DS_Store
+*.iml
+*.ipr
+*.iws
