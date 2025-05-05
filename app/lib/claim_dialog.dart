@@ -25,6 +25,8 @@ class _ClaimDialogState extends State<ClaimDialog> {
   bool _isSubmitting = false;
   String? _contentIdError;
   String? _walletAddressError;
+  String? _parsedContentId;
+  String? _parsingError;
 
   @override
   void initState() {
@@ -33,10 +35,12 @@ class _ClaimDialogState extends State<ClaimDialog> {
     _walletAddressController = TextEditingController(
       text: widget.initialWalletAddress ?? '',
     );
+    _contentIdController.addListener(_parseContentIdInput);
   }
 
   @override
   void dispose() {
+    _contentIdController.removeListener(_parseContentIdInput);
     _contentIdController.dispose();
     _walletAddressController.dispose();
     super.dispose();
@@ -58,23 +62,48 @@ class _ClaimDialogState extends State<ClaimDialog> {
     });
   }
 
+  void _parseContentIdInput() {
+    final rawInput = _contentIdController.text.trim();
+    if (rawInput.isEmpty) {
+      setState(() {
+        _parsedContentId = null;
+        _parsingError = null;
+      });
+      return;
+    }
+
+    try {
+      final parsed = ContentIdParser.parse(
+        rawInput,
+        widget.bounty.platformType,
+      );
+      final didParse = parsed != rawInput;
+      setState(() {
+        _parsedContentId = didParse ? parsed : null;
+        _parsingError = null;
+      });
+    } catch (e) {
+      setState(() {
+        _parsedContentId = null;
+        _parsingError = "Invalid format or URL";
+      });
+    }
+  }
+
   void _submitClaim() {
+    _parseContentIdInput();
+
     setState(() {
       _isSubmitting = true;
     });
 
-    // Parse the content ID before submitting
-    final rawContentInput = _contentIdController.text.trim();
-    final parsedContentId = ContentIdParser.parse(
-      rawContentInput,
-      widget.bounty.platformType,
-    );
+    final String finalContentId =
+        _parsedContentId ?? _contentIdController.text.trim();
 
-    // Simulate a brief delay to show loading state
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         widget.onSubmit(
-          parsedContentId,
+          finalContentId,
           _walletAddressController.text.trim(),
         );
       }
@@ -165,7 +194,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
           ),
           const SizedBox(height: 24),
           Text(
-            'Content ID',
+            'Content ID or URL',
             style: theme.textTheme.titleSmall?.copyWith(
               color: theme.colorScheme.onSurface,
             ),
@@ -174,8 +203,9 @@ class _ClaimDialogState extends State<ClaimDialog> {
           TextField(
             controller: _contentIdController,
             decoration: InputDecoration(
-              hintText: 'Enter the content ID',
-              errorText: _contentIdError,
+              labelText: 'Content ID or URL',
+              hintText: 'Enter the content ID or URL',
+              errorText: _contentIdError ?? _parsingError,
               prefixIcon: Icon(
                 Icons.insert_drive_file_outlined,
                 color: theme.colorScheme.primary,
@@ -211,6 +241,16 @@ class _ClaimDialogState extends State<ClaimDialog> {
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.next,
           ),
+          if (_parsedContentId != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+              child: Text(
+                'Using ID: $_parsedContentId',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.secondary,
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           Text(
             'Wallet Address',
