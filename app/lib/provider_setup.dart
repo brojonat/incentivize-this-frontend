@@ -7,13 +7,11 @@ import 'storage_service.dart';
 class ProviderSetup extends StatelessWidget {
   final Widget child;
   final String apiBaseUrl;
-  final String? authToken;
 
   const ProviderSetup({
     Key? key,
     required this.child,
     required this.apiBaseUrl,
-    this.authToken,
   }) : super(key: key);
 
   @override
@@ -23,7 +21,6 @@ class ProviderSetup extends StatelessWidget {
         Provider<ApiService>(
           create: (_) => ApiService(
             baseUrl: apiBaseUrl,
-            authToken: authToken,
           ),
         ),
         Provider<StorageService>(

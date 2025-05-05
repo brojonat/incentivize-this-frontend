@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'home_screen.dart';
 import 'provider_setup.dart';
 import 'theme.dart';
@@ -18,9 +19,6 @@ class MyApp extends StatelessWidget {
       'API_BASE_URL',
       defaultValue: 'http://localhost:8080',
     );
-    const String? authToken = String.fromEnvironment('AUTH_TOKEN') == ""
-        ? null
-        : String.fromEnvironment('AUTH_TOKEN');
 
     if (apiBaseUrl.isEmpty) {
       throw Exception('API_BASE_URL must be provided via --dart-define');
@@ -28,7 +26,6 @@ class MyApp extends StatelessWidget {
 
     return ProviderSetup(
       apiBaseUrl: apiBaseUrl,
-      authToken: authToken,
       child: MaterialApp(
         title: 'IncentivizeThis',
         theme: lightTheme,

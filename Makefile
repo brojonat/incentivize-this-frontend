@@ -33,7 +33,7 @@ all: deploy-frontend
 # 1. Build Flutter Web App
 build-flutter:
 	@echo "Building Flutter web application..."
-	cd $(FRONTEND_APP_DIR) && flutter build web --dart-define-from-file=.env.prod
+	cd $(FRONTEND_APP_DIR) && flutter build web --release --dart-define-from-file=.env.prod
 	@echo "Flutter build complete."
 
 build-flutter-dev:

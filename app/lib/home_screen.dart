@@ -9,6 +9,7 @@ import 'claim_dialog.dart';
 import 'loading_indicator.dart';
 import 'theme.dart';
 import 'bounty_detail_screen.dart';
+import 'auth_prompt_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -134,7 +135,33 @@ class _HomeScreenState extends State<HomeScreen>
     String contentId,
     String walletAddress,
   ) async {
+    // 1. Check for auth token
+    final token = await _storageService.getAuthToken();
+
+    if (token == null || token.isEmpty) {
+      // 2. If no token, show the AuthPromptDialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false, // User must enter token or cancel
+          builder: (_) => AuthPromptDialog(
+            onTokenSaved: () {
+              // 3. When token is saved, *try* submitting again
+              // Note: Could add loading indicator here while waiting
+              print('Token saved, retrying submission...');
+              _submitClaim(bounty, contentId, walletAddress);
+            },
+          ),
+        );
+      }
+      return; // Stop execution until token is provided
+    }
+
+    // 4. If token exists, proceed with submission
     try {
+      // Show loading/processing indicator (optional)
+      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submitting claim...')));
+
       // Save wallet address for future use
       await _storageService.saveWalletAddress(walletAddress);
 
@@ -148,10 +175,12 @@ class _HomeScreenState extends State<HomeScreen>
       );
 
       if (mounted) {
-        // Close claim dialog
-        Navigator.of(context).pop();
+        // Close claim dialog (if it was open before auth prompt)
+        // Check if a dialog is open before popping
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop(); // Pop the original ClaimDialog
+        }
 
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Claim submitted successfully!'),

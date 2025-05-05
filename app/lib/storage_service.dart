@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class StorageService {
   static const String _walletAddressKey = 'wallet_address';
   static const String _recentBountiesKey = 'recent_bounties';
+  static const String _authTokenKey = 'auth_token'; // Key for JWT
 
   // Save wallet address
   Future<bool> saveWalletAddress(String walletAddress) async {
@@ -23,6 +24,36 @@ class StorageService {
     } catch (e) {
       // Return null if there's an error
       return null;
+    }
+  }
+
+  // Save the authentication token (JWT)
+  Future<bool> saveAuthToken(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.setString(_authTokenKey, token);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Get the saved authentication token (JWT)
+  Future<String?> getAuthToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_authTokenKey);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Delete the saved authentication token (JWT)
+  Future<bool> deleteAuthToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.remove(_authTokenKey);
+    } catch (e) {
+      return false;
     }
   }
 

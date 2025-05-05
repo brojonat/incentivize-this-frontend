@@ -1,25 +1,33 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'bounty.dart';
+import 'storage_service.dart';
 
 class ApiService {
   // Base URL for the API - replace with your actual backend URL
   final String baseUrl;
   final http.Client _client;
-  final String? _authToken; // Changed to final, set by constructor
 
   ApiService({
     required this.baseUrl,
     http.Client? client,
-    String? authToken, // Add authToken to constructor
-  })  : _client = client ?? http.Client(),
-        _authToken = authToken; // Initialize _authToken
+  }) : _client = client ?? http.Client();
 
-  // Helper method to get headers
-  Map<String, String> _getHeaders() {
+  // Helper method to get headers - now async
+  Future<Map<String, String>> _getHeaders() async {
     final headers = {'Content-Type': 'application/json'};
-    if (_authToken != null) {
-      headers['Authorization'] = 'Bearer $_authToken';
+    try {
+      // Directly get token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    } catch (e) {
+      // Handle error if needed, e.g., log it
+      print('Error fetching auth token for headers: $e');
     }
     return headers;
   }
@@ -29,7 +37,7 @@ class ApiService {
     try {
       final response = await _client.get(
         Uri.parse('$baseUrl/bounties'),
-        headers: _getHeaders(), // Use helper to add headers
+        headers: await _getHeaders(), // Await the headers
       );
 
       if (response.statusCode == 200) {
@@ -56,7 +64,7 @@ class ApiService {
     try {
       final response = await _client.post(
         Uri.parse('$baseUrl/bounties/assess'),
-        headers: _getHeaders(), // Use helper to add headers
+        headers: await _getHeaders(), // Await the headers
         body: json.encode({
           'bounty_id': bountyId,
           'content_id': contentId,
