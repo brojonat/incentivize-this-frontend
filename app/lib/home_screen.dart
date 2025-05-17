@@ -510,12 +510,12 @@ class _HomeScreenState extends State<HomeScreen>
 
     bool noActiveBounties = _filteredBounties.isEmpty;
     bool noPaidBounties = _paidBounties.isEmpty;
+    bool filtersAreActive = _selectedPlatforms.isNotEmpty ||
+        _minRewardFilter != null ||
+        _maxRewardFilter != null;
 
     if (noActiveBounties && noPaidBounties) {
       // Show a general "No Data" message if both lists are empty
-      bool filtersActive = _selectedPlatforms.isNotEmpty ||
-          _minRewardFilter != null ||
-          _maxRewardFilter != null;
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -523,15 +523,15 @@ class _HomeScreenState extends State<HomeScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                filtersActive
+                filtersAreActive
                     ? Icons.filter_alt_off_outlined
-                    : Icons.layers_clear_outlined, // Changed icon
+                    : Icons.layers_clear_outlined,
                 size: 64,
                 color: theme.colorScheme.outline,
               ),
               const SizedBox(height: 16),
               Text(
-                filtersActive
+                filtersAreActive
                     ? 'No Matching Bounties'
                     : 'No Bounties Available',
                 style: theme.textTheme.headlineSmall?.copyWith(
@@ -541,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                filtersActive
+                filtersAreActive
                     ? 'Try adjusting your filters or clear them to see all available bounties.'
                     : 'There are no active or recently paid bounties to display right now. Pull down to refresh.',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -549,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              if (filtersActive)
+              if (filtersAreActive)
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: ElevatedButton.icon(
@@ -573,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen>
       onRefresh: _handleRefresh,
       color: theme.colorScheme.primary,
       child: CustomScrollView(
-        slivers: [
+        slivers: <Widget>[
           // --- Active Bounties Section ---
           if (!noActiveBounties) ...[
             SliverToBoxAdapter(
@@ -592,7 +592,6 @@ class _HomeScreenState extends State<HomeScreen>
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  // The title is now a separate SliverToBoxAdapter, so index directly maps.
                   final bounty = _filteredBounties[index];
                   return BountyCard(
                     bounty: bounty,
@@ -603,18 +602,26 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
-          // Show "No Matching Active Bounties" message if filters are active and hide all active bounties
-          if (noActiveBounties &&
-              (_selectedPlatforms.isNotEmpty ||
-                  _minRewardFilter != null ||
-                  _maxRewardFilter != null)) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                // Add some top padding if this message is the first thing shown
-                padding: EdgeInsets.only(top: noPaidBounties ? 0 : 16.0),
-                child: _buildNoActiveBountiesMessage(theme),
+
+          // --- Placeholder for No Active Bounties (if active bounties are empty AND paid bounties exist) ---
+          if (noActiveBounties && !noPaidBounties) ...[
+            if (filtersAreActive) ...[
+              // No active bounties BECAUSE of active filters
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+                  child: _buildNoActiveBountiesMessage(theme),
+                ),
               ),
-            ),
+            ] else ...[
+              // No active bounties, and NO filters are active
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+                  child: _buildNoActiveBountiesAvailableMessage(theme),
+                ),
+              ),
+            ],
           ],
 
           // --- Recently Paid Bounties Section ---
@@ -624,15 +631,7 @@ class _HomeScreenState extends State<HomeScreen>
                 padding: EdgeInsets.only(
                   left: 16.0,
                   right: 16.0,
-                  // Consistent top padding:
-                  // If active bounties (or the 'no active' message) were shown, add more space.
-                  // If this is the very first section, use standard top padding.
-                  top: (noActiveBounties &&
-                          !(_selectedPlatforms.isNotEmpty ||
-                              _minRewardFilter != null ||
-                              _maxRewardFilter != null))
-                      ? 16.0 // No active bounties AND no "no active bounties" message shown
-                      : 24.0, // Either active bounties were shown, or the "no active" message was shown
+                  top: 24.0, // Consistent top padding
                   bottom: 8.0,
                 ),
                 child: Text(
@@ -659,7 +658,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // Helper Widget for "No Matching Active Bounties" message
+  // Helper Widget for "No Matching Active Bounties" (when filters are active)
   Widget _buildNoActiveBountiesMessage(ThemeData theme) {
     bool filtersActive = _selectedPlatforms.isNotEmpty ||
         _minRewardFilter != null ||
@@ -704,6 +703,39 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  // Helper Widget for "No Active Bounties Available" (no filters, list is empty)
+  Widget _buildNoActiveBountiesAvailableMessage(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.info_outline, // A more general icon
+            size: 48,
+            color: theme.colorScheme.outline,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No Active Bounties Currently',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Check back later or pull down to refresh.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
