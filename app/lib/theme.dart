@@ -12,7 +12,7 @@ final ThemeData lightTheme = ThemeData(
     backgroundColor: Colors.transparent, // Example: Make AppBar transparent
     foregroundColor: Colors.black, // Example: Set text/icon color
   ),
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     elevation: 0, // Example: Flat cards
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
@@ -41,7 +41,7 @@ final ThemeData darkTheme = ThemeData(
     backgroundColor: Colors.transparent,
     foregroundColor: Colors.white,
   ),
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     elevation: 0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
