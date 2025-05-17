@@ -409,9 +409,12 @@ class _HomeScreenState extends State<HomeScreen>
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(
-              Icons.assignment_outlined,
-              color: theme.colorScheme.primary,
+            Text(
+              '🥕',
+              style: TextStyle(
+                fontSize: 24, // A reasonable size for an app bar icon
+                color: theme.colorScheme.primary,
+              ),
             ),
             const SizedBox(width: 8),
             const Text('IncentivizeThis'),
@@ -571,64 +574,76 @@ class _HomeScreenState extends State<HomeScreen>
       color: theme.colorScheme.primary,
       child: CustomScrollView(
         slivers: [
-          // --- Active Bounties Section --- (Only if not empty)
-          if (!noActiveBounties)
+          // --- Active Bounties Section ---
+          if (!noActiveBounties) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+                child: Text(
+                  'Active Bounties',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  // Add padding/title before the first active bounty card
-                  if (index == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.only(
-                          left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
-                      child: Text(
-                        'Active Bounties',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    );
-                  }
-                  final bounty = _filteredBounties[index - 1];
+                  // The title is now a separate SliverToBoxAdapter, so index directly maps.
+                  final bounty = _filteredBounties[index];
                   return BountyCard(
                     bounty: bounty,
                     onTap: () => _showBountyDetail(bounty),
                   );
                 },
-                childCount: _filteredBounties.length + 1, // +1 for title
+                childCount: _filteredBounties.length,
               ),
             ),
-          // Show "No Matching Active Bounties" if filters are active and list is empty
+          ],
+          // Show "No Matching Active Bounties" message if filters are active and hide all active bounties
           if (noActiveBounties &&
-              !noPaidBounties &&
               (_selectedPlatforms.isNotEmpty ||
                   _minRewardFilter != null ||
-                  _maxRewardFilter != null))
+                  _maxRewardFilter != null)) ...[
             SliverToBoxAdapter(
-              child: _buildNoActiveBountiesMessage(theme),
+              child: Padding(
+                // Add some top padding if this message is the first thing shown
+                padding: EdgeInsets.only(top: noPaidBounties ? 0 : 16.0),
+                child: _buildNoActiveBountiesMessage(theme),
+              ),
             ),
+          ],
 
-          // --- Recently Paid Bounties Section --- (Only if not empty)
-          if (!noPaidBounties)
+          // --- Recently Paid Bounties Section ---
+          if (!noPaidBounties) ...[
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.only(
                   left: 16.0,
                   right: 16.0,
-                  top: noActiveBounties ? 16.0 : 24.0, // Adjust top padding
+                  // Consistent top padding:
+                  // If active bounties (or the 'no active' message) were shown, add more space.
+                  // If this is the very first section, use standard top padding.
+                  top: (noActiveBounties &&
+                          !(_selectedPlatforms.isNotEmpty ||
+                              _minRewardFilter != null ||
+                              _maxRewardFilter != null))
+                      ? 16.0 // No active bounties AND no "no active bounties" message shown
+                      : 24.0, // Either active bounties were shown, or the "no active" message was shown
                   bottom: 8.0,
                 ),
                 child: Text(
                   'Recently Paid',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.secondary, // Different color
+                    color: theme.colorScheme.secondary,
                   ),
                 ),
               ),
             ),
-          if (!noPaidBounties)
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -638,6 +653,7 @@ class _HomeScreenState extends State<HomeScreen>
                 childCount: _paidBounties.length,
               ),
             ),
+          ],
         ],
       ),
     );
@@ -649,47 +665,46 @@ class _HomeScreenState extends State<HomeScreen>
         _minRewardFilter != null ||
         _maxRewardFilter != null;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.filter_alt_off_outlined,
-              size: 48,
-              color: theme.colorScheme.outline,
+    // Reduced vertical padding here, more controlled by the Sliver parent
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.filter_alt_off_outlined,
+            size: 48,
+            color: theme.colorScheme.outline,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No Matching Active Bounties',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'No Matching Active Bounties',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting or clearing your filters.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Try adjusting or clearing your filters.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (filtersActive)
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: ElevatedButton.icon(
-                  onPressed: _clearFilters,
-                  icon: Icon(Icons.clear_all),
-                  label: Text('Clear Filters'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.secondary,
-                    foregroundColor: theme.colorScheme.onSecondary,
-                  ),
+            textAlign: TextAlign.center,
+          ),
+          if (filtersActive)
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: ElevatedButton.icon(
+                onPressed: _clearFilters,
+                icon: Icon(Icons.clear_all),
+                label: Text('Clear Filters'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.secondary,
+                  foregroundColor: theme.colorScheme.onSecondary,
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
