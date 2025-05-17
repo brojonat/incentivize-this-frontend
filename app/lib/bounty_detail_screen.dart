@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'bounty.dart';
 import 'claim_dialog.dart';
 import 'info_chip.dart';
-import 'theme.dart';
 
 class BountyDetailScreen extends StatelessWidget {
   final Bounty bounty;
@@ -12,11 +11,11 @@ class BountyDetailScreen extends StatelessWidget {
   final Function(String contentId, String walletAddress) onSubmitClaim;
 
   const BountyDetailScreen({
-    Key? key,
+    super.key,
     required this.bounty,
     this.walletAddress,
     required this.onSubmitClaim,
-  }) : super(key: key);
+  });
 
   void _showClaimDialog(BuildContext context) {
     showDialog(

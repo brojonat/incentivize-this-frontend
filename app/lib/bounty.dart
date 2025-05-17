@@ -43,8 +43,8 @@ class Bounty {
   factory Bounty.fromJson(Map<String, dynamic> json) {
     final List<dynamic> requirementsRaw = json['requirements'] ?? [];
     final List<String> requirements = requirementsRaw
-        .where((req) => req is String)
-        .map((req) => req as String)
+        .whereType<String>()
+        .map((req) => req)
         .toList();
 
     final String platform =

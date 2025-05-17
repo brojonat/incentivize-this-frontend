@@ -4,14 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'storage_service.dart';
-import 'theme.dart';
 
 class AuthPromptDialog extends StatefulWidget {
   // Callback function to indicate successful token saving
   final VoidCallback onTokenSaved;
 
-  const AuthPromptDialog({Key? key, required this.onTokenSaved})
-      : super(key: key);
+  const AuthPromptDialog({super.key, required this.onTokenSaved});
 
   @override
   State<AuthPromptDialog> createState() => _AuthPromptDialogState();
@@ -106,29 +104,6 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
                 ),
               ),
               const SizedBox(height: 24),
-              TextFormField(
-                controller: _jwtController,
-                decoration: InputDecoration(
-                  labelText: 'JWT Token',
-                  hintText: 'Paste your token here',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: const Icon(Icons.vpn_key_outlined),
-                ),
-                obscureText: true,
-                maxLines: 1,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Token cannot be empty';
-                  }
-                  if (value.trim().split('.').length != 3) {
-                    return 'Invalid token format';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
               // Instructions for getting a token
               RichText(
                 textAlign: TextAlign.center,
@@ -149,6 +124,35 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
                     ),
                     const TextSpan(text: ' and I\'ll email one to you.'),
                   ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Wrap TextFormField in a SizedBox for fixed width
+              Center(
+                child: SizedBox(
+                  width: 300, // Set a fixed width for the input field
+                  child: TextFormField(
+                    controller: _jwtController,
+                    decoration: InputDecoration(
+                      labelText: 'JWT Token',
+                      hintText: 'Paste your token here',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.vpn_key_outlined),
+                    ),
+                    obscureText: true,
+                    maxLines: 1,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Token cannot be empty';
+                      }
+                      if (value.trim().split('.').length != 3) {
+                        return 'Invalid token format';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

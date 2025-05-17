@@ -24,7 +24,7 @@ define setup_env
 	$(eval export)
 endef
 
-.PHONY: all build-flutter build-docker push-docker deploy-frontend delete-frontend logs-frontend status-frontend restart-frontend
+.PHONY: all build-flutter build-docker push-docker deploy-frontend delete-frontend logs-frontend status-frontend restart-frontend run-flutter-dev
 
 all: deploy-frontend
 
@@ -40,6 +40,12 @@ build-flutter-dev:
 	@echo "Building Flutter web application..."
 	cd $(FRONTEND_APP_DIR) && flutter build web --dart-define-from-file=.env.dev
 	@echo "Flutter build complete."
+
+# Run Flutter Web App in Chrome for development
+run-flutter-dev:
+	@echo "Running Flutter web application in Chrome (using .env.dev)..."
+	cd $(FRONTEND_APP_DIR) && flutter run -d chrome --dart-define-from-file=.env.dev
+	@echo "Flutter app stopped."
 
 # 2. Build Docker Image
 build-docker: build-flutter
@@ -114,6 +120,7 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
+	@echo "  run-flutter-dev      Runs the Flutter web app in Chrome with .env.dev."
 	@echo "  build-flutter        Builds the Flutter web application."
 	@echo "  build-docker         Builds the Docker image for the frontend."
 	@echo "  push-docker          Pushes the Docker image to the registry."

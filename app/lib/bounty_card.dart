@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Import intl for date formatting
 
 import 'bounty.dart';
-import 'theme.dart';
 import 'info_chip.dart';
 
 class BountyCard extends StatelessWidget {
@@ -10,10 +9,10 @@ class BountyCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const BountyCard({
-    Key? key,
+    super.key,
     required this.bounty,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

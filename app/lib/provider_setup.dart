@@ -9,10 +9,10 @@ class ProviderSetup extends StatelessWidget {
   final String apiBaseUrl;
 
   const ProviderSetup({
-    Key? key,
+    super.key,
     required this.child,
     required this.apiBaseUrl,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

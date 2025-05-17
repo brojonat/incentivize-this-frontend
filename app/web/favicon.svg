@@ -1,0 +1,7 @@
+<svg width="32" height="32" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <title>Carrot Favicon</title>
+  <!-- Stick: a simple brown rounded rectangle, slightly rotated -->
+  <!-- <rect x="65" y="10" width="15" height="100" rx="7.5" ry="7.5" fill="#A0522D" transform="rotate(20 72.5 60)" /> -->
+  <!-- Carrot Emoji: positioned to the left and slightly overlapping -->
+  <text x="5" y="90" style="font-size: 80px;">🥕</text>
+</svg>

@@ -85,7 +85,7 @@ class ContentIdParser {
                 }
               }
               // Check for clips.twitch.tv/{id} format
-              else if (segments.length >= 1 && uri.host == 'clips.twitch.tv') {
+              else if (segments.isNotEmpty && uri.host == 'clips.twitch.tv') {
                 final clipId = segments[0];
                 if (clipId.isNotEmpty &&
                     RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(clipId)) {
@@ -94,6 +94,26 @@ class ContentIdParser {
               }
             }
           }
+          break;
+
+        case 'HACKERNEWS': // New case for Hacker News
+          if (uri.host.contains('news.ycombinator.com') &&
+              uri.pathSegments.isNotEmpty &&
+              uri.pathSegments.first == 'item' &&
+              uri.queryParameters.containsKey('id')) {
+            final hnId = uri.queryParameters['id'];
+            if (hnId != null && hnId.isNotEmpty) {
+              return hnId;
+            }
+          }
+          break;
+
+        case 'BLUESKY': // Updated case for Bluesky
+          if (uri.host.contains('bsky.app')) {
+            return trimmedInput; // Return the full URI if it's a bsky.app link
+          }
+          // If platform is BLUESKY but not a bsky.app link,
+          // it will fall through to the default behavior (return trimmedInput).
           break;
 
         default:

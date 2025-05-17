@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'bounty.dart';
-import 'storage_service.dart';
+import 'paid_bounty_item.dart';
 
 class ApiService {
   // Base URL for the API - replace with your actual backend URL
@@ -50,6 +50,26 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching bounties: $e');
+    }
+  }
+
+  // Fetch recently paid bounties
+  Future<List<PaidBountyItem>> fetchPaidBounties({int limit = 10}) async {
+    try {
+      final response = await _client.get(
+        // Assuming the endpoint is /bounties/paid
+        Uri.parse('$baseUrl/bounties/paid?limit=$limit'),
+        headers: await _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => PaidBountyItem.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load paid bounties: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching paid bounties: $e');
     }
   }
 

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+// For currency formatting
 
 import 'bounty.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import 'bounty_card.dart';
-import 'claim_dialog.dart';
 import 'loading_indicator.dart';
-import 'theme.dart';
 import 'bounty_detail_screen.dart';
 import 'auth_prompt_dialog.dart';
+import 'paid_bounty_item.dart'; // Import the new model
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<Bounty> _bounties = [];
   List<Bounty> _filteredBounties = [];
+  List<PaidBountyItem> _paidBounties = []; // Add state for paid bounties
   bool _isLoading = true;
   String? _errorMessage;
   String? _walletAddress;
@@ -71,13 +72,20 @@ class _HomeScreenState extends State<HomeScreen>
       // Load saved wallet address
       final walletAddress = await _storageService.getWalletAddress();
 
-      // Fetch bounties from API
-      final bounties = await _apiService.fetchBounties();
+      // Fetch bounties and paid bounties concurrently
+      final results = await Future.wait([
+        _apiService.fetchBounties(),
+        _apiService.fetchPaidBounties(limit: 5), // Fetch top 5 paid
+      ]);
+
+      final bounties = results[0] as List<Bounty>;
+      final paidBounties = results[1] as List<PaidBountyItem>;
 
       if (mounted) {
         setState(() {
           _bounties = bounties;
           _filteredBounties = List.from(_bounties);
+          _paidBounties = paidBounties; // Set paid bounties state
           _walletAddress = walletAddress;
           _isLoading = false;
         });
@@ -88,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load bounties: ${e.toString()}';
+          _errorMessage = 'Failed to load data: ${e.toString()}';
           _isLoading = false;
         });
       }
@@ -497,11 +505,14 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
-    if (_filteredBounties.isEmpty) {
+    bool noActiveBounties = _filteredBounties.isEmpty;
+    bool noPaidBounties = _paidBounties.isEmpty;
+
+    if (noActiveBounties && noPaidBounties) {
+      // Show a general "No Data" message if both lists are empty
       bool filtersActive = _selectedPlatforms.isNotEmpty ||
           _minRewardFilter != null ||
           _maxRewardFilter != null;
-
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -511,13 +522,15 @@ class _HomeScreenState extends State<HomeScreen>
               Icon(
                 filtersActive
                     ? Icons.filter_alt_off_outlined
-                    : Icons.search_off,
+                    : Icons.layers_clear_outlined, // Changed icon
                 size: 64,
                 color: theme.colorScheme.outline,
               ),
               const SizedBox(height: 16),
               Text(
-                filtersActive ? 'No Matching Bounties' : 'No Bounties Found',
+                filtersActive
+                    ? 'No Matching Bounties'
+                    : 'No Bounties Available',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
@@ -527,7 +540,7 @@ class _HomeScreenState extends State<HomeScreen>
               Text(
                 filtersActive
                     ? 'Try adjusting your filters or clear them to see all available bounties.'
-                    : 'There are no bounties available at the moment. Pull down to refresh.',
+                    : 'There are no active or recently paid bounties to display right now. Pull down to refresh.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
@@ -552,21 +565,161 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
+    // Use CustomScrollView to combine different list types
     return RefreshIndicator(
       onRefresh: _handleRefresh,
       color: theme.colorScheme.primary,
-      child: ListView.builder(
-        itemCount: _filteredBounties.length,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemBuilder: (context, index) {
-          final bounty = _filteredBounties[index];
-          return BountyCard(
-            bounty: bounty,
-            onTap: () => _showBountyDetail(bounty),
-          );
-        },
+      child: CustomScrollView(
+        slivers: [
+          // --- Active Bounties Section --- (Only if not empty)
+          if (!noActiveBounties)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  // Add padding/title before the first active bounty card
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                          left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+                      child: Text(
+                        'Active Bounties',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    );
+                  }
+                  final bounty = _filteredBounties[index - 1];
+                  return BountyCard(
+                    bounty: bounty,
+                    onTap: () => _showBountyDetail(bounty),
+                  );
+                },
+                childCount: _filteredBounties.length + 1, // +1 for title
+              ),
+            ),
+          // Show "No Matching Active Bounties" if filters are active and list is empty
+          if (noActiveBounties &&
+              !noPaidBounties &&
+              (_selectedPlatforms.isNotEmpty ||
+                  _minRewardFilter != null ||
+                  _maxRewardFilter != null))
+            SliverToBoxAdapter(
+              child: _buildNoActiveBountiesMessage(theme),
+            ),
+
+          // --- Recently Paid Bounties Section --- (Only if not empty)
+          if (!noPaidBounties)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  top: noActiveBounties ? 16.0 : 24.0, // Adjust top padding
+                  bottom: 8.0,
+                ),
+                child: Text(
+                  'Recently Paid',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.secondary, // Different color
+                  ),
+                ),
+              ),
+            ),
+          if (!noPaidBounties)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final item = _paidBounties[index];
+                  return _buildPaidBountyTile(theme, item);
+                },
+                childCount: _paidBounties.length,
+              ),
+            ),
+        ],
       ),
+    );
+  }
+
+  // Helper Widget for "No Matching Active Bounties" message
+  Widget _buildNoActiveBountiesMessage(ThemeData theme) {
+    bool filtersActive = _selectedPlatforms.isNotEmpty ||
+        _minRewardFilter != null ||
+        _maxRewardFilter != null;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.filter_alt_off_outlined,
+              size: 48,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No Matching Active Bounties',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting or clearing your filters.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (filtersActive)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: ElevatedButton.icon(
+                  onPressed: _clearFilters,
+                  icon: Icon(Icons.clear_all),
+                  label: Text('Clear Filters'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.secondary,
+                    foregroundColor: theme.colorScheme.onSecondary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper Widget to build a tile for a paid bounty
+  Widget _buildPaidBountyTile(ThemeData theme, PaidBountyItem item) {
+    // Use a ListTile for standard structure
+    return ListTile(
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
+      leading: CircleAvatar(
+        backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+        foregroundColor: theme.colorScheme.secondary,
+        child: Icon(Icons.receipt_long, size: 20),
+      ),
+      title: Text(
+        item.formattedAmount, // Display formatted amount
+        style: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        item.formattedTimestamp, // Display formatted timestamp
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurface.withOpacity(0.6),
+        ),
+      ),
+      // Trailing can be used later for memo/link if needed
+      // trailing: Icon(Icons.open_in_new, size: 18, color: theme.colorScheme.outline),
+      // onTap: () { /* Optional: View transaction details? */ },
     );
   }
 }

@@ -6,11 +6,11 @@ class InfoChip extends StatelessWidget {
   final Color color;
 
   const InfoChip({
-    Key? key,
+    super.key,
     required this.icon,
     required this.text,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
