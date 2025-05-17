@@ -26,12 +26,31 @@ class PaidBountyItem {
       timestamp = DateTime(1970); // Default to epoch or handle differently
     }
 
+    // Robust amount parsing
+    double amountValue = 0.0;
+    final dynamic amountData = json['amount'];
+    if (amountData is num) {
+      amountValue = amountData.toDouble();
+    } else if (amountData is Map<String, dynamic>) {
+      // It's a complex object (e.g., solana.USDCAmount from PayoutDetail struct).
+      // As per requirements, we are not displaying this amount on the detail page
+      // when fetched for a specific workflow, so we can default it or extract
+      // a 'value' field if it existed and was needed.
+      // For now, defaulting to 0.0 is fine as it won't be shown in this context.
+      // If this model were exclusively for PayoutDetail, we might parse its sub-fields.
+    }
+
     return PaidBountyItem(
-      signature: json['signature'] as String? ?? '',
+      signature:
+          json['signature'] as String? ?? '', // Default to empty if not present
       timestamp: timestamp,
-      recipientOwnerWallet: json['recipient_owner_wallet'] as String? ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      memo: json['memo'] as String?,
+      // PayoutDetail sends 'payout_wallet', allow it to be parsed here if available,
+      // otherwise default to empty. User mentioned it's intentionally "".
+      recipientOwnerWallet: json['payout_wallet'] as String? ??
+          json['recipient_owner_wallet'] as String? ??
+          '',
+      amount: amountValue,
+      memo: json['memo'] as String?, // Default to null if not present
     );
   }
 

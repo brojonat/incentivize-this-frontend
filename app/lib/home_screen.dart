@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // For currency formatting
+import 'dart:async'; // Added for Timer
 
 import 'bounty.dart';
 import 'api_service.dart';
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen>
   late final StorageService _storageService;
   late final AnimationController _animationController;
   late final Animation<double> _animation;
+  Timer? _pollingTimer; // Added for polling
 
   List<Bounty> _bounties = [];
   List<Bounty> _filteredBounties = [];
@@ -53,22 +55,43 @@ class _HomeScreenState extends State<HomeScreen>
       curve: Curves.easeInOut,
     );
 
-    _loadData();
+    _loadData(isInitialLoad: true);
+    _startPolling(); // Start polling
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _pollingTimer?.cancel(); // Cancel the timer
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    try {
+  void _startPolling() {
+    _pollingTimer?.cancel(); // Cancel any existing timer
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        // Check if the widget is still in the tree
+        _loadData();
+      }
+    });
+  }
+
+  Future<void> _loadData({bool isInitialLoad = false}) async {
+    // Only show full loading indicator on initial load or manual refresh
+    // and reset animation only on initial load/manual refresh.
+    bool showLoadingIndicator = isInitialLoad || _bounties.isEmpty;
+
+    if (showLoadingIndicator) {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
       });
+    }
+    if (isInitialLoad) {
+      _animationController.reset();
+    }
 
+    try {
       // Load saved wallet address
       final walletAddress = await _storageService.getWalletAddress();
 
@@ -84,28 +107,39 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         setState(() {
           _bounties = bounties;
-          _filteredBounties = List.from(_bounties);
-          _paidBounties = paidBounties; // Set paid bounties state
+          // _filteredBounties = List.from(_bounties); // ApplyFilters will handle this
+          _paidBounties = paidBounties;
           _walletAddress = walletAddress;
-          _isLoading = false;
+          if (showLoadingIndicator) {
+            _isLoading = false;
+          }
         });
 
-        _applyFilters();
-        _animationController.forward();
+        _applyFilters(); // Apply filters which will also update _filteredBounties
+        if (isInitialLoad) {
+          _animationController.forward();
+        }
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to load data: ${e.toString()}';
-          _isLoading = false;
-        });
+        // Only set error message if it's an initial load or if there's no data
+        // This prevents the error message from briefly appearing during a poll if data is already displayed
+        if (isInitialLoad || _bounties.isEmpty) {
+          setState(() {
+            _errorMessage = 'Failed to load data: ${e.toString()}';
+            _isLoading = false;
+          });
+        } else {
+          // Optionally, log the error or show a subtle notification for background refresh failures
+          print('Background refresh failed: ${e.toString()}');
+        }
       }
     }
   }
 
   Future<void> _handleRefresh() async {
-    _animationController.reset();
-    await _loadData();
+    // For manual refresh, treat it like an initial load in terms of UI feedback
+    await _loadData(isInitialLoad: true);
     return Future.value();
   }
 

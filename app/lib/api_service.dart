@@ -99,6 +99,26 @@ class ApiService {
     }
   }
 
+  // Fetch a single bounty by its ID
+  Future<Bounty> fetchBountyById(String bountyId) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$baseUrl/bounties/$bountyId'),
+        headers: await _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return Bounty.fromJson(data);
+      } else {
+        throw Exception(
+            'Failed to load bounty $bountyId: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching bounty $bountyId: $e');
+    }
+  }
+
   // Submit a claim for a bounty
   Future<Map<String, dynamic>> submitClaim({
     required String bountyId,
