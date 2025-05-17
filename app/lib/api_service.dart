@@ -73,6 +73,32 @@ class ApiService {
     }
   }
 
+  // Fetch paid bounties for a specific workflow
+  Future<List<PaidBountyItem>> fetchPaidBountiesForWorkflow(
+      {required String bountyId, int? limit}) async {
+    try {
+      String url = '$baseUrl/bounties/$bountyId/paid';
+      if (limit != null) {
+        url += '?limit=$limit';
+      }
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => PaidBountyItem.fromJson(json)).toList();
+      } else {
+        throw Exception(
+            'Failed to load paid bounties for workflow $bountyId: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception(
+          'Error fetching paid bounties for workflow $bountyId: $e');
+    }
+  }
+
   // Submit a claim for a bounty
   Future<Map<String, dynamic>> submitClaim({
     required String bountyId,

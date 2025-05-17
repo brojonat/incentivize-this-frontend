@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import 'bounty.dart';
 import 'claim_dialog.dart';
 import 'info_chip.dart';
+import 'api_service.dart';
+import 'paid_bounty_item.dart';
+import 'loading_indicator.dart';
 
-class BountyDetailScreen extends StatelessWidget {
+class BountyDetailScreen extends StatefulWidget {
   final Bounty bounty;
   final String? walletAddress;
   final Function(String contentId, String walletAddress) onSubmitClaim;
@@ -17,13 +21,54 @@ class BountyDetailScreen extends StatelessWidget {
     required this.onSubmitClaim,
   });
 
+  @override
+  State<BountyDetailScreen> createState() => _BountyDetailScreenState();
+}
+
+class _BountyDetailScreenState extends State<BountyDetailScreen> {
+  late final ApiService _apiService;
+  List<PaidBountyItem> _paidItemsForWorkflow = [];
+  bool _isLoadingPaidItems = true;
+  String? _paidItemsError;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = Provider.of<ApiService>(context, listen: false);
+    _fetchPaidItemsForWorkflow();
+  }
+
+  Future<void> _fetchPaidItemsForWorkflow() async {
+    setState(() {
+      _isLoadingPaidItems = true;
+      _paidItemsError = null;
+    });
+    try {
+      final items = await _apiService.fetchPaidBountiesForWorkflow(
+          bountyId: widget.bounty.id);
+      if (mounted) {
+        setState(() {
+          _paidItemsForWorkflow = items;
+          _isLoadingPaidItems = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _paidItemsError = 'Failed to load paid items: ${e.toString()}';
+          _isLoadingPaidItems = false;
+        });
+      }
+    }
+  }
+
   void _showClaimDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => ClaimDialog(
-        bounty: bounty,
-        initialWalletAddress: walletAddress,
-        onSubmit: onSubmitClaim,
+        bounty: widget.bounty,
+        initialWalletAddress: widget.walletAddress,
+        onSubmit: widget.onSubmitClaim,
       ),
     );
   }
@@ -47,6 +92,33 @@ class BountyDetailScreen extends StatelessWidget {
         .toList();
 
     return requirements.join('\n');
+  }
+
+  // Helper Widget to build a tile for a paid bounty (similar to HomeScreen)
+  Widget _buildPaidBountyTile(ThemeData theme, PaidBountyItem item) {
+    return ListTile(
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
+      leading: CircleAvatar(
+        backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+        foregroundColor: theme.colorScheme.secondary,
+        child: Icon(Icons.receipt_long, size: 20),
+      ),
+      title: Text(
+        item.formattedAmount,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        item.formattedTimestamp,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurface.withOpacity(0.6),
+        ),
+      ),
+      // Optionally, display memo or link to transaction if available
+      // trailing: item.memo != null ? Text(item.memo!) : null,
+    );
   }
 
   @override
@@ -90,29 +162,29 @@ class BountyDetailScreen extends StatelessWidget {
                       InfoChip(
                         icon: Icons.monetization_on_outlined,
                         text:
-                            '${bounty.bountyPerPost.toStringAsFixed(2)} per post',
+                            '${widget.bounty.bountyPerPost.toStringAsFixed(2)} per post',
                         color: Colors.green.shade700,
                       ),
                       const SizedBox(width: 8),
                       InfoChip(
                         icon: Icons.device_hub_outlined,
-                        text: bounty.platformType,
+                        text: widget.bounty.platformType,
                         color: theme.colorScheme.tertiary,
                       ),
                       const SizedBox(width: 8),
                       InfoChip(
                         icon: Icons.article_outlined,
-                        text: bounty.contentKind,
+                        text: widget.bounty.contentKind,
                         color: Colors.orange.shade700,
                       ),
                       const SizedBox(width: 8),
                       InfoChip(
                         icon: Icons.inventory_2_outlined,
-                        text: bounty.remainingPostsDisplay,
+                        text: widget.bounty.remainingPostsDisplay,
                         color: theme.colorScheme.secondary,
                       ),
-                      if (bounty.deadline != null &&
-                          bounty.deadline!.year > 1970) ...[
+                      if (widget.bounty.deadline != null &&
+                          widget.bounty.deadline!.year > 1970) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -131,7 +203,7 @@ class BountyDetailScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                dateFormat.format(bounty.deadline!),
+                                dateFormat.format(widget.bounty.deadline!),
                                 style: theme.textTheme.labelMedium?.copyWith(
                                   color: theme.colorScheme.tertiary,
                                   fontWeight: FontWeight.w500,
@@ -146,7 +218,7 @@ class BountyDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: bounty.isActive
+                          color: widget.bounty.isActive
                               ? theme.colorScheme.primary.withOpacity(0.1)
                               : theme.colorScheme.outline.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
@@ -155,19 +227,19 @@ class BountyDetailScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              bounty.isActive
+                              widget.bounty.isActive
                                   ? Icons.verified_outlined
                                   : Icons.hourglass_empty,
                               size: 16,
-                              color: bounty.isActive
+                              color: widget.bounty.isActive
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.outline,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              bounty.isActive ? 'Active' : 'Closed',
+                              widget.bounty.isActive ? 'Active' : 'Closed',
                               style: theme.textTheme.labelMedium?.copyWith(
-                                color: bounty.isActive
+                                color: widget.bounty.isActive
                                     ? theme.colorScheme.primary
                                     : theme.colorScheme.outline,
                                 fontWeight: FontWeight.w500,
@@ -180,7 +252,7 @@ class BountyDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _formatRequirements(bounty.description),
+                    _formatRequirements(widget.bounty.description),
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.8),
                       fontWeight: FontWeight.bold,
@@ -191,10 +263,65 @@ class BountyDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+
+            // Paid Items for this Workflow Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Recent Claims for this Bounty',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.secondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_isLoadingPaidItems)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20.0),
+                child: LoadingIndicator(message: 'Loading claims...'),
+              )
+            else if (_paidItemsError != null)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(
+                  child: Text(
+                    _paidItemsError!,
+                    style: TextStyle(color: theme.colorScheme.error),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            else if (_paidItemsForWorkflow.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 16.0),
+                child: Center(
+                  child: Text(
+                    'No claims have been paid for this bounty yet.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap:
+                    true, // Important for ListView inside SingleChildScrollView
+                physics:
+                    const NeverScrollableScrollPhysics(), // Disable scrolling for inner list
+                itemCount: _paidItemsForWorkflow.length,
+                itemBuilder: (context, index) {
+                  final item = _paidItemsForWorkflow[index];
+                  return _buildPaidBountyTile(theme, item);
+                },
+              ),
+            const SizedBox(height: 24), // Bottom padding
           ],
         ),
       ),
-      bottomNavigationBar: bounty.isActive
+      bottomNavigationBar: widget.bounty.isActive
           ? Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
