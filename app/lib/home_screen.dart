@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart'; // Import go_router
 // For currency formatting
 import 'dart:async'; // Added for Timer
 
@@ -8,7 +9,7 @@ import 'api_service.dart';
 import 'storage_service.dart';
 import 'bounty_card.dart';
 import 'loading_indicator.dart';
-import 'bounty_detail_screen.dart';
+// import 'bounty_detail_screen.dart'; // No longer directly navigating
 import 'auth_prompt_dialog.dart';
 import 'paid_bounty_item.dart'; // Import the new model
 
@@ -32,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen>
   List<PaidBountyItem> _paidBounties = []; // Add state for paid bounties
   bool _isLoading = true;
   String? _errorMessage;
-  String? _walletAddress;
+  // String? _walletAddress; // Wallet address is managed by BountyDetailScreen
 
   Set<String> _selectedPlatforms = {};
   double? _minRewardFilter;
@@ -77,8 +78,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _loadData({bool isInitialLoad = false}) async {
-    // Only show full loading indicator on initial load or manual refresh
-    // and reset animation only on initial load/manual refresh.
     bool showLoadingIndicator = isInitialLoad || _bounties.isEmpty;
 
     if (showLoadingIndicator) {
@@ -92,9 +91,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     try {
-      // Load saved wallet address
-      final walletAddress = await _storageService.getWalletAddress();
-
       // Fetch bounties and paid bounties concurrently
       final results = await Future.wait([
         _apiService.fetchBounties(),
@@ -107,30 +103,26 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         setState(() {
           _bounties = bounties;
-          // _filteredBounties = List.from(_bounties); // ApplyFilters will handle this
           _paidBounties = paidBounties;
-          _walletAddress = walletAddress;
+          // _walletAddress = walletAddress; // Wallet address managed by BountyDetailScreen
           if (showLoadingIndicator) {
             _isLoading = false;
           }
         });
 
-        _applyFilters(); // Apply filters which will also update _filteredBounties
+        _applyFilters();
         if (isInitialLoad) {
           _animationController.forward();
         }
       }
     } catch (e) {
       if (mounted) {
-        // Only set error message if it's an initial load or if there's no data
-        // This prevents the error message from briefly appearing during a poll if data is already displayed
         if (isInitialLoad || _bounties.isEmpty) {
           setState(() {
             _errorMessage = 'Failed to load data: ${e.toString()}';
             _isLoading = false;
           });
         } else {
-          // Optionally, log the error or show a subtle notification for background refresh failures
           print('Background refresh failed: ${e.toString()}');
         }
       }
@@ -138,7 +130,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _handleRefresh() async {
-    // For manual refresh, treat it like an initial load in terms of UI feedback
     await _loadData(isInitialLoad: true);
     return Future.value();
   }
@@ -160,101 +151,11 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showBountyDetail(Bounty bounty) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => BountyDetailScreen(
-          bounty: bounty,
-          walletAddress: _walletAddress,
-          onSubmitClaim: (contentId, walletAddress) =>
-              _submitClaim(bounty, contentId, walletAddress),
-        ),
-      ),
-    );
+    // Use go_router to navigate
+    context.go('/bounties/${bounty.id}', extra: bounty);
   }
 
-  Future<void> _submitClaim(
-    Bounty bounty,
-    String contentId,
-    String walletAddress,
-  ) async {
-    // 1. Check for auth token
-    final token = await _storageService.getAuthToken();
-
-    if (token == null || token.isEmpty) {
-      // 2. If no token, show the AuthPromptDialog
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false, // User must enter token or cancel
-          builder: (_) => AuthPromptDialog(
-            onTokenSaved: () {
-              // 3. When token is saved, *try* submitting again
-              // Note: Could add loading indicator here while waiting
-              print('Token saved, retrying submission...');
-              _submitClaim(bounty, contentId, walletAddress);
-            },
-          ),
-        );
-      }
-      return; // Stop execution until token is provided
-    }
-
-    // 4. If token exists, proceed with submission
-    try {
-      // Show loading/processing indicator (optional)
-      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submitting claim...')));
-
-      // Save wallet address for future use
-      await _storageService.saveWalletAddress(walletAddress);
-
-      // Submit claim to API using details from the bounty object
-      final result = await _apiService.submitClaim(
-        bountyId: bounty.id,
-        contentId: contentId,
-        walletAddress: walletAddress,
-        platformType: bounty.platformType,
-        contentKind: bounty.contentKind,
-      );
-
-      if (mounted) {
-        // Close claim dialog (if it was open before auth prompt)
-        // Check if a dialog is open before popping
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop(); // Pop the original ClaimDialog
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Claim submitted successfully!'),
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-
-        // Refresh bounties list
-        _loadData();
-      }
-    } catch (e) {
-      if (mounted) {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    }
-  }
+  // _submitClaim method is removed as it's now handled in BountyDetailScreen
 
   void _clearFilters() {
     setState(() {
@@ -266,12 +167,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showFilterSheet() {
-    // Get unique platform types from the original bounties list
     final availablePlatforms =
         _bounties.map((b) => b.platformType).toSet().toList();
-    availablePlatforms.sort(); // Sort for consistent order
+    availablePlatforms.sort();
 
-    // Define reward range options (customize as needed)
     final Map<String, ({double? min, double? max})> rewardRanges = {
       'Any Reward': (min: null, max: null),
       '< \$10': (min: null, max: 9.99),
@@ -279,37 +178,28 @@ class _HomeScreenState extends State<HomeScreen>
       '\$50 - \$100': (min: 50.0, max: 100.0),
       '> \$100': (min: 100.01, max: null),
     };
-    // Find the key corresponding to the current filter state
     String currentRewardRangeKey = rewardRanges.keys.firstWhere(
       (key) =>
           rewardRanges[key]!.min == _minRewardFilter &&
           rewardRanges[key]!.max == _maxRewardFilter,
-      orElse: () => rewardRanges.keys.first, // Default to 'Any Reward'
+      orElse: () => rewardRanges.keys.first,
     );
 
-    // *** Declare temporary state variables OUTSIDE the StatefulBuilder ***
     Set<String> tempSelectedPlatforms = Set.from(_selectedPlatforms);
     String tempRewardRangeKey = currentRewardRangeKey;
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Allows sheet to take more height if needed
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        // Use StatefulBuilder to manage local state within the sheet
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            // *** REMOVE re-initialization from here ***
-            // Set<String> tempSelectedPlatforms = Set.from(_selectedPlatforms); // REMOVED
-            // String tempRewardRangeKey = currentRewardRangeKey; // REMOVED
-
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context)
-                    .viewInsets
-                    .bottom, // Adjust for keyboard
+                bottom: MediaQuery.of(context).viewInsets.bottom,
                 top: 20,
                 left: 20,
                 right: 20,
@@ -398,7 +288,6 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         TextButton(
                           onPressed: () {
-                            // Reset temporary state within the sheet
                             setModalState(() {
                               tempSelectedPlatforms.clear();
                               tempRewardRangeKey = rewardRanges.keys.first;
@@ -409,7 +298,6 @@ class _HomeScreenState extends State<HomeScreen>
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () {
-                            // Apply filters to the main screen state
                             setState(() {
                               _selectedPlatforms = tempSelectedPlatforms;
                               _minRewardFilter =
@@ -417,14 +305,14 @@ class _HomeScreenState extends State<HomeScreen>
                               _maxRewardFilter =
                                   rewardRanges[tempRewardRangeKey]?.max;
                             });
-                            _applyFilters(); // Apply the chosen filters
-                            Navigator.pop(context); // Close the sheet
+                            _applyFilters();
+                            Navigator.pop(context);
                           },
                           child: const Text('Apply Filters'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16), // Bottom padding
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -446,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen>
             Text(
               '🥕',
               style: TextStyle(
-                fontSize: 24, // A reasonable size for an app bar icon
+                fontSize: 24,
                 color: theme.colorScheme.primary,
               ),
             ),
@@ -549,7 +437,6 @@ class _HomeScreenState extends State<HomeScreen>
         _maxRewardFilter != null;
 
     if (noActiveBounties && noPaidBounties) {
-      // Show a general "No Data" message if both lists are empty
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -602,13 +489,11 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
-    // Use CustomScrollView to combine different list types
     return RefreshIndicator(
       onRefresh: _handleRefresh,
       color: theme.colorScheme.primary,
       child: CustomScrollView(
         slivers: <Widget>[
-          // --- Active Bounties Section ---
           if (!noActiveBounties) ...[
             SliverToBoxAdapter(
               child: Padding(
@@ -636,11 +521,8 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
-
-          // --- Placeholder for No Active Bounties (if active bounties are empty AND paid bounties exist) ---
           if (noActiveBounties && !noPaidBounties) ...[
             if (filtersAreActive) ...[
-              // No active bounties BECAUSE of active filters
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
@@ -648,7 +530,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ] else ...[
-              // No active bounties, and NO filters are active
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
@@ -657,15 +538,13 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ],
-
-          // --- Recently Paid Bounties Section ---
           if (!noPaidBounties) ...[
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.only(
                   left: 16.0,
                   right: 16.0,
-                  top: 24.0, // Consistent top padding
+                  top: 24.0,
                   bottom: 8.0,
                 ),
                 child: Text(
@@ -692,13 +571,11 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // Helper Widget for "No Matching Active Bounties" (when filters are active)
   Widget _buildNoActiveBountiesMessage(ThemeData theme) {
     bool filtersActive = _selectedPlatforms.isNotEmpty ||
         _minRewardFilter != null ||
         _maxRewardFilter != null;
 
-    // Reduced vertical padding here, more controlled by the Sliver parent
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       child: Column(
@@ -742,7 +619,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // Helper Widget for "No Active Bounties Available" (no filters, list is empty)
   Widget _buildNoActiveBountiesAvailableMessage(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
@@ -750,7 +626,7 @@ class _HomeScreenState extends State<HomeScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.info_outline, // A more general icon
+            Icons.info_outline,
             size: 48,
             color: theme.colorScheme.outline,
           ),
@@ -775,9 +651,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // Helper Widget to build a tile for a paid bounty
   Widget _buildPaidBountyTile(ThemeData theme, PaidBountyItem item) {
-    // Use a ListTile for standard structure
     return ListTile(
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
@@ -787,20 +661,17 @@ class _HomeScreenState extends State<HomeScreen>
         child: Icon(Icons.receipt_long, size: 20),
       ),
       title: Text(
-        item.formattedAmount, // Display formatted amount
+        item.formattedAmount,
         style: theme.textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w600,
         ),
       ),
       subtitle: Text(
-        item.formattedTimestamp, // Display formatted timestamp
+        item.formattedTimestamp,
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurface.withOpacity(0.6),
         ),
       ),
-      // Trailing can be used later for memo/link if needed
-      // trailing: Icon(Icons.open_in_new, size: 18, color: theme.colorScheme.outline),
-      // onTap: () { /* Optional: View transaction details? */ },
     );
   }
 }

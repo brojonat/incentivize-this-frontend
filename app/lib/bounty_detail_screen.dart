@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'dart:async'; // Added for Timer
+import 'dart:async';
+import 'package:go_router/go_router.dart'; // For navigation
 
 import 'bounty.dart';
 import 'claim_dialog.dart';
@@ -9,17 +10,17 @@ import 'info_chip.dart';
 import 'api_service.dart';
 import 'paid_bounty_item.dart';
 import 'loading_indicator.dart';
+import 'storage_service.dart'; // For wallet and auth token
+import 'auth_prompt_dialog.dart'; // For auth prompt
 
 class BountyDetailScreen extends StatefulWidget {
-  final Bounty bounty;
-  final String? walletAddress;
-  final Function(String contentId, String walletAddress) onSubmitClaim;
+  final String bountyId;
+  final Bounty? initialBounty; // Optional initial bounty data
 
   const BountyDetailScreen({
     super.key,
-    required this.bounty,
-    this.walletAddress,
-    required this.onSubmitClaim,
+    required this.bountyId,
+    this.initialBounty,
   });
 
   @override
@@ -28,6 +29,7 @@ class BountyDetailScreen extends StatefulWidget {
 
 class _BountyDetailScreenState extends State<BountyDetailScreen> {
   late final ApiService _apiService;
+  late final StorageService _storageService;
   List<PaidBountyItem> _paidItemsForWorkflow = [];
   bool _isLoadingPaidItems = true;
   bool _isLoadingBounty = true;
@@ -35,12 +37,15 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
   String? _bountyError;
   Timer? _pollingTimer;
   Bounty? _currentBounty;
+  String? _walletAddress;
 
   @override
   void initState() {
     super.initState();
     _apiService = Provider.of<ApiService>(context, listen: false);
-    _currentBounty = widget.bounty;
+    _storageService = Provider.of<StorageService>(context, listen: false);
+    _currentBounty = widget.initialBounty;
+    _loadWalletAddress();
     _refreshBountyData(isInitialLoad: true);
     _startPolling();
   }
@@ -49,6 +54,13 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
   void dispose() {
     _pollingTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadWalletAddress() async {
+    _walletAddress = await _storageService.getWalletAddress();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _startPolling() {
@@ -70,7 +82,8 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
         _paidItemsError = null;
       });
     }
-    if (showBountyLoading) {
+    if (showBountyLoading && _currentBounty == null) {
+      // Only set loading if no bounty data yet
       setState(() {
         _isLoadingBounty = true;
         _bountyError = null;
@@ -79,14 +92,14 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
 
     try {
       final results = await Future.wait([
-        _apiService.fetchBountyById(widget.bounty.id),
-        _apiService.fetchPaidBountiesForWorkflow(bountyId: widget.bounty.id),
+        _apiService.fetchBountyById(widget.bountyId), // Use widget.bountyId
+        _apiService.fetchPaidBountiesForWorkflow(
+            bountyId: widget.bountyId), // Use widget.bountyId
       ]);
 
       final newBountyDetails = results[0] as Bounty;
       final paidItems = results[1] as List<PaidBountyItem>;
 
-      // Sort paid items: most recent first
       paidItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
       if (mounted) {
@@ -124,13 +137,91 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
     }
   }
 
+  Future<void> _submitClaim(
+    String contentId,
+    String walletAddress,
+  ) async {
+    if (_currentBounty == null) return;
+
+    final token = await _storageService.getAuthToken();
+
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AuthPromptDialog(
+            onTokenSaved: () {
+              print('Token saved, retrying submission...');
+              _submitClaim(contentId, walletAddress);
+            },
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      if (mounted) {
+        // Pop the claim dialog before showing snackbar
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      }
+
+      await _storageService.saveWalletAddress(walletAddress);
+      setState(() {
+        _walletAddress = walletAddress; // Update local state
+      });
+
+      final result = await _apiService.submitClaim(
+        bountyId: _currentBounty!.id,
+        contentId: contentId,
+        walletAddress: walletAddress,
+        platformType: _currentBounty!.platformType,
+        contentKind: _currentBounty!.contentKind,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Claim submitted successfully! ID: ${result["claim_id"] ?? "N/A"}'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        _refreshBountyData(); // Refresh data after successful claim
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error submitting claim: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    }
+  }
+
   void _showClaimDialog(BuildContext context) {
+    if (_currentBounty == null) return;
     showDialog(
       context: context,
       builder: (context) => ClaimDialog(
         bounty: _currentBounty!,
-        initialWalletAddress: widget.walletAddress,
-        onSubmit: widget.onSubmitClaim,
+        initialWalletAddress: _walletAddress,
+        onSubmit: _submitClaim, // Pass the internal _submitClaim method
       ),
     );
   }
@@ -140,34 +231,28 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
     if (description == noRequirementsText) {
       return description;
     }
-
-    // Split by newline, then split each line by ". " to get sentences.
-    // Flatten the list, trim whitespace, filter empty strings, and add bullets.
     final List<String> requirements = description
         .split('\n')
-        .expand((line) => line.split('. ')) // Split each line into sentences
-        .map((sentence) => sentence.trim()) // Trim whitespace
-        .where((sentence) => sentence.isNotEmpty) // Remove empty sentences
-        // Add bullet point and ensure it ends with a period
+        .expand((line) => line.split('. '))
+        .map((sentence) => sentence.trim())
+        .where((sentence) => sentence.isNotEmpty)
         .map((sentence) =>
             '• ${sentence.endsWith('.') ? sentence : '$sentence.'}')
         .toList();
-
     return requirements.join('\n');
   }
 
-  // Helper Widget to build a tile for a paid bounty (now only showing timestamp)
   Widget _buildPaidBountyTile(ThemeData theme, PaidBountyItem item) {
     return ListTile(
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0),
       leading: Icon(
-        Icons.timer_outlined, // Changed icon to reflect time
+        Icons.timer_outlined,
         color: theme.colorScheme.secondary,
         size: 22,
       ),
       title: Text(
-        item.formattedTimestamp, // Display formatted timestamp
+        item.formattedTimestamp,
         style: theme.textTheme.bodyMedium,
       ),
     );
@@ -180,14 +265,16 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
 
     if (_isLoadingBounty && _currentBounty == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Bounty Details')),
+        appBar: AppBar(
+            title: Text(widget.initialBounty?.title ?? 'Bounty Details')),
         body: const LoadingIndicator(message: 'Loading bounty details...'),
       );
     }
 
     if (_bountyError != null && _currentBounty == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Bounty Details')),
+        appBar: AppBar(
+            title: Text(widget.initialBounty?.title ?? 'Bounty Details')),
         body: Center(
             child: Text(_bountyError!,
                 style: TextStyle(color: theme.colorScheme.error))),
@@ -195,30 +282,40 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
     }
 
     if (_currentBounty == null) {
+      // This case should ideally be covered by the error or loading state,
+      // but as a fallback:
       return Scaffold(
         appBar: AppBar(title: const Text('Error')),
         body: const Center(child: Text('Could not load bounty details.')),
       );
     }
 
+    // Bounty is loaded, build the UI
     return Scaffold(
       appBar: AppBar(
-        title: Text('Bounty Details'),
+        title: Text(_currentBounty!.title.isNotEmpty
+            ? _currentBounty!.title
+            : 'Bounty Details'),
         elevation: 0,
         backgroundColor: theme.colorScheme.surface,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.colorScheme.primary,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+            icon: Icon(
+              Icons.arrow_back,
+              color: theme.colorScheme.primary,
+            ),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                // If it can't pop (e.g., deep link), go to home
+                context.go('/');
+              }
+            }),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header section with bounty title and status
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -232,7 +329,9 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 8.0,
                     children: [
                       InfoChip(
                         icon: Icons.monetization_on_outlined,
@@ -240,55 +339,27 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                             '${_currentBounty!.bountyPerPost.toStringAsFixed(2)} per post',
                         color: Colors.green.shade700,
                       ),
-                      const SizedBox(width: 8),
                       InfoChip(
                         icon: Icons.device_hub_outlined,
                         text: _currentBounty!.platformType,
                         color: theme.colorScheme.tertiary,
                       ),
-                      const SizedBox(width: 8),
                       InfoChip(
                         icon: Icons.article_outlined,
                         text: _currentBounty!.contentKind,
                         color: Colors.orange.shade700,
                       ),
-                      const SizedBox(width: 8),
                       InfoChip(
                         icon: Icons.inventory_2_outlined,
                         text: _currentBounty!.remainingPostsDisplay,
                         color: theme.colorScheme.secondary,
                       ),
                       if (_currentBounty!.deadline != null &&
-                          _currentBounty!.deadline!.year > 1970) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.tertiary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.schedule,
-                                size: 16,
-                                color: theme.colorScheme.tertiary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                dateFormat.format(_currentBounty!.deadline!),
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.tertiary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      const SizedBox(width: 8),
+                          _currentBounty!.deadline!.year > 1970)
+                        InfoChip(
+                            icon: Icons.schedule,
+                            text: dateFormat.format(_currentBounty!.deadline!),
+                            color: theme.colorScheme.tertiary),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
@@ -338,12 +409,10 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Paid Items for this Workflow Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                'Claim Activity', // Updated section title
+                'Claim Activity',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.secondary,
@@ -382,17 +451,15 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
               )
             else
               ListView.builder(
-                shrinkWrap:
-                    true, // Important for ListView inside SingleChildScrollView
-                physics:
-                    const NeverScrollableScrollPhysics(), // Disable scrolling for inner list
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: _paidItemsForWorkflow.length,
                 itemBuilder: (context, index) {
                   final item = _paidItemsForWorkflow[index];
                   return _buildPaidBountyTile(theme, item);
                 },
               ),
-            const SizedBox(height: 24), // Bottom padding
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -452,7 +519,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: null, // Disabled button
+                onPressed: null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.outline.withOpacity(0.2),
                   padding: const EdgeInsets.symmetric(vertical: 16),

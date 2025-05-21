@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
-import 'home_screen.dart';
 import 'provider_setup.dart';
 import 'theme.dart';
+import 'app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  GoRouter.optionURLReflectsImperativeAPIs = true;
+  usePathUrlStrategy();
   runApp(const MyApp());
 }
 
@@ -26,13 +29,13 @@ class MyApp extends StatelessWidget {
 
     return ProviderSetup(
       apiBaseUrl: apiBaseUrl,
-      child: MaterialApp(
+      child: MaterialApp.router(
         title: 'IncentivizeThis',
         theme: lightTheme,
         darkTheme: darkTheme,
         themeMode: ThemeMode.system,
         debugShowCheckedModeBanner: false,
-        home: const HomeScreen(),
+        routerConfig: appRouter,
       ),
     );
   }
