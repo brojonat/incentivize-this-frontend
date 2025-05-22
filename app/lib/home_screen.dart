@@ -12,6 +12,7 @@ import 'loading_indicator.dart';
 // import 'bounty_detail_screen.dart'; // No longer directly navigating
 import 'auth_prompt_dialog.dart';
 import 'paid_bounty_item.dart'; // Import the new model
+import 'search_bounties_sheet.dart'; // Import the search sheet
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen>
   List<PaidBountyItem> _paidBounties = []; // Add state for paid bounties
   bool _isLoading = true;
   String? _errorMessage;
-  // String? _walletAddress; // Wallet address is managed by BountyDetailScreen
+  String? _activeSearchQuery; // To store the current search query
 
   Set<String> _selectedPlatforms = {};
   double? _minRewardFilter;
@@ -70,8 +71,8 @@ class _HomeScreenState extends State<HomeScreen>
   void _startPolling() {
     _pollingTimer?.cancel(); // Cancel any existing timer
     _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted) {
-        // Check if the widget is still in the tree
+      if (mounted && _activeSearchQuery == null) {
+        // Only poll if not actively searching
         _loadData();
       }
     });
@@ -91,20 +92,28 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     try {
-      // Fetch bounties and paid bounties concurrently
-      final results = await Future.wait([
-        _apiService.fetchBounties(),
-        _apiService.fetchPaidBounties(limit: 5), // Fetch top 5 paid
-      ]);
+      List<Bounty> fetchedBounties;
+      if (_activeSearchQuery != null && _activeSearchQuery!.trim().isNotEmpty) {
+        // Perform search
+        fetchedBounties = await _apiService.searchBounties(_activeSearchQuery!);
+      } else {
+        // Fetch all bounties
+        fetchedBounties = await _apiService.fetchBounties();
+      }
 
-      final bounties = results[0] as List<Bounty>;
-      final paidBounties = results[1] as List<PaidBountyItem>;
+      // Fetch paid bounties (only if not searching, or decide if search should also refresh this)
+      // For now, let's keep paid bounties fetching independent of search to simplify.
+      final paidBounties = _activeSearchQuery == null
+          ? await _apiService.fetchPaidBounties(limit: 5)
+          : _paidBounties; // Keep existing paid bounties if searching
 
       if (mounted) {
         setState(() {
-          _bounties = bounties;
-          _paidBounties = paidBounties;
-          // _walletAddress = walletAddress; // Wallet address managed by BountyDetailScreen
+          _bounties = fetchedBounties;
+          if (_activeSearchQuery == null) {
+            // Only update paidBounties if not searching
+            _paidBounties = paidBounties;
+          }
           if (showLoadingIndicator) {
             _isLoading = false;
           }
@@ -129,7 +138,38 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  Future<void> _performSearchAndUpdateList(String query) async {
+    setState(() {
+      _activeSearchQuery = query.trim().isEmpty ? null : query.trim();
+      // Stop polling when a search is active
+      if (_activeSearchQuery != null) {
+        _pollingTimer?.cancel();
+      } else {
+        _startPolling(); // Restart polling if search is cleared
+      }
+    });
+    // Close the search sheet, which should be done by the sheet itself before calling this
+    // if (Navigator.of(context).canPop()) {
+    //   Navigator.of(context).pop();
+    // }
+    await _loadData(
+        isInitialLoad: true); // Reload data with the new search query
+  }
+
+  Future<void> _clearSearch() async {
+    setState(() {
+      _activeSearchQuery = null;
+      _selectedPlatforms.clear(); // Optionally clear filters too
+      _minRewardFilter = null;
+      _maxRewardFilter = null;
+    });
+    _startPolling(); // Restart polling
+    await _loadData(isInitialLoad: true); // Reload to show all bounties
+  }
+
   Future<void> _handleRefresh() async {
+    // If a search is active, refreshing should re-run the search.
+    // If no search is active, it refreshes all bounties.
     await _loadData(isInitialLoad: true);
     return Future.value();
   }
@@ -138,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _filteredBounties = _bounties.where((bounty) {
         final bool platformMatch = _selectedPlatforms.isEmpty ||
-            _selectedPlatforms.contains(bounty.platformType);
+            _selectedPlatforms.contains(bounty.platformKind);
 
         final bool rewardMatch = (_minRewardFilter == null ||
                 bounty.bountyPerPost >= _minRewardFilter!) &&
@@ -168,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _showFilterSheet() {
     final availablePlatforms =
-        _bounties.map((b) => b.platformType).toSet().toList();
+        _bounties.map((b) => b.platformKind).toSet().toList();
     availablePlatforms.sort();
 
     final Map<String, ({double? min, double? max})> rewardRanges = {
@@ -323,6 +363,25 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  void _showSearchSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: Container(
+            color: Theme.of(context).cardColor,
+            child: SearchBountiesSheet(
+              onSearchSubmitted: _performSearchAndUpdateList,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -339,12 +398,31 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
             const SizedBox(width: 8),
-            const Text('IncentivizeThis'),
+            Text(_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty
+                ? 'Search Results'
+                : 'IncentivizeThis'),
           ],
         ),
         elevation: 0,
         backgroundColor: theme.colorScheme.surface,
         actions: [
+          IconButton(
+            icon: Icon(
+              Icons.search,
+              color: theme.colorScheme.primary,
+            ),
+            onPressed: _isLoading ? null : _showSearchSheet,
+            tooltip: 'Search Bounties',
+          ),
+          if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty)
+            IconButton(
+              icon: Icon(
+                Icons.clear, // Clear search icon
+                color: theme.colorScheme.primary,
+              ),
+              onPressed: _isLoading ? null : _clearSearch,
+              tooltip: 'Clear Search',
+            ),
           IconButton(
             icon: Icon(
               Icons.refresh,
@@ -373,7 +451,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildBody(ThemeData theme) {
     if (_isLoading) {
-      return const LoadingIndicator(message: 'Loading bounties...');
+      return LoadingIndicator(
+          message: _activeSearchQuery != null
+              ? 'Searching for "$_activeSearchQuery"...'
+              : 'Loading bounties...');
     }
 
     if (_errorMessage != null) {
@@ -430,13 +511,16 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
+    bool isSearching =
+        _activeSearchQuery != null && _activeSearchQuery!.isNotEmpty;
     bool noActiveBounties = _filteredBounties.isEmpty;
-    bool noPaidBounties = _paidBounties.isEmpty;
+    bool noPaidBounties =
+        _paidBounties.isEmpty && !isSearching; // Hide paid if searching for now
     bool filtersAreActive = _selectedPlatforms.isNotEmpty ||
         _minRewardFilter != null ||
         _maxRewardFilter != null;
 
-    if (noActiveBounties && noPaidBounties) {
+    if (noActiveBounties && (noPaidBounties || isSearching)) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -444,39 +528,59 @@ class _HomeScreenState extends State<HomeScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                filtersAreActive
-                    ? Icons.filter_alt_off_outlined
-                    : Icons.layers_clear_outlined,
+                isSearching
+                    ? Icons.search_off_rounded
+                    : (filtersAreActive
+                        ? Icons.filter_alt_off_outlined
+                        : Icons.layers_clear_outlined),
                 size: 64,
                 color: theme.colorScheme.outline,
               ),
               const SizedBox(height: 16),
               Text(
-                filtersAreActive
-                    ? 'No Matching Bounties'
-                    : 'No Bounties Available',
+                isSearching
+                    ? 'No Results for "$_activeSearchQuery"'
+                    : (filtersAreActive
+                        ? 'No Matching Bounties'
+                        : 'No Bounties Available'),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                filtersAreActive
-                    ? 'Try adjusting your filters or clear them to see all available bounties.'
-                    : 'There are no active or recently paid bounties to display right now. Pull down to refresh.',
+                isSearching
+                    ? 'Try a different search term or clear the search.'
+                    : (filtersAreActive
+                        ? 'Try adjusting your filters or clear them to see all available bounties.'
+                        : 'There are no active or recently paid bounties to display right now. Pull down to refresh.'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
-              if (filtersAreActive)
+              if (filtersAreActive && !isSearching)
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: ElevatedButton.icon(
                     onPressed: _clearFilters,
-                    icon: Icon(Icons.clear_all),
-                    label: Text('Clear Filters'),
+                    icon: const Icon(Icons.clear_all),
+                    label: const Text('Clear Filters'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: theme.colorScheme.onSecondary,
+                    ),
+                  ),
+                ),
+              if (isSearching)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: ElevatedButton.icon(
+                    onPressed: _clearSearch, // Button to clear the search
+                    icon: const Icon(Icons.clear_all),
+                    label: const Text('Clear Search'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.secondary,
                       foregroundColor: theme.colorScheme.onSecondary,
@@ -494,20 +598,48 @@ class _HomeScreenState extends State<HomeScreen>
       color: theme.colorScheme.primary,
       child: CustomScrollView(
         slivers: <Widget>[
-          if (!noActiveBounties) ...[
+          if (isSearching && _activeSearchQuery!.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(
-                    left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
-                child: Text(
-                  'Active Bounties',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
-                  ),
+                    left: 16.0, right: 16.0, top: 16.0, bottom: 0.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Search Results for "$_activeSearchQuery":',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        ),
+                      ),
+                    ),
+                    // TextButton.icon( // Alternative clear button placement
+                    //   icon: Icon(Icons.clear, size: 18),
+                    //   label: Text('Clear'),
+                    //   onPressed: _clearSearch,
+                    //   style: TextButton.styleFrom(foregroundColor: theme.colorScheme.primary),
+                    // )
+                  ],
                 ),
               ),
             ),
+          ],
+          if (!noActiveBounties) ...[
+            if (!isSearching) // Only show "Active Bounties" title if not searching
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+                  child: Text(
+                    'Active Bounties',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -521,7 +653,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
-          if (noActiveBounties && !noPaidBounties) ...[
+          if (noActiveBounties && !isSearching && !noPaidBounties) ...[
             if (filtersAreActive) ...[
               SliverToBoxAdapter(
                 child: Padding(
@@ -538,10 +670,11 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ],
-          if (!noPaidBounties) ...[
+          if (!noPaidBounties && !isSearching) ...[
+            // Hide paid bounties when searching
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.only(
+                padding: const EdgeInsets.only(
                   left: 16.0,
                   right: 16.0,
                   top: 24.0,

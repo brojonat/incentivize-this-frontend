@@ -178,7 +178,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
         bountyId: _currentBounty!.id,
         contentId: contentId,
         walletAddress: walletAddress,
-        platformType: _currentBounty!.platformType,
+        platformKind: _currentBounty!.platformKind,
         contentKind: _currentBounty!.contentKind,
       );
 
@@ -341,7 +341,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                       ),
                       InfoChip(
                         icon: Icons.device_hub_outlined,
-                        text: _currentBounty!.platformType,
+                        text: _currentBounty!.platformKind,
                         color: theme.colorScheme.tertiary,
                       ),
                       InfoChip(

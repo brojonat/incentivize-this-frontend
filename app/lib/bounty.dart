@@ -5,7 +5,7 @@ class Bounty {
   final double bountyPerPost;
   final DateTime? deadline;
   final bool isActive;
-  final String platformType;
+  final String platformKind;
   final double totalBounty;
   final double remainingBountyValue;
   final String contentKind;
@@ -17,7 +17,7 @@ class Bounty {
     required this.bountyPerPost,
     this.deadline,
     this.isActive = true,
-    required this.platformType,
+    required this.platformKind,
     required this.totalBounty,
     required this.remainingBountyValue,
     required this.contentKind,
@@ -42,13 +42,11 @@ class Bounty {
 
   factory Bounty.fromJson(Map<String, dynamic> json) {
     final List<dynamic> requirementsRaw = json['requirements'] ?? [];
-    final List<String> requirements = requirementsRaw
-        .whereType<String>()
-        .map((req) => req)
-        .toList();
+    final List<String> requirements =
+        requirementsRaw.whereType<String>().map((req) => req).toList();
 
     final String platform =
-        json['platform_type']?.toString().toUpperCase() ?? 'Unknown Platform';
+        json['platform_kind']?.toString().toUpperCase() ?? 'Unknown Platform';
     final String defaultTitle = '$platform Bounty';
 
     // Extract title from the first sentence of the first requirement
@@ -97,7 +95,7 @@ class Bounty {
       bountyPerPost: bountyPerPost,
       deadline: deadline,
       isActive: isActive,
-      platformType: platform,
+      platformKind: platform,
       totalBounty: totalBounty,
       remainingBountyValue: remainingBountyValue,
       contentKind: contentKind,
@@ -114,7 +112,7 @@ class Bounty {
       'remaining_bounty_value': remainingBountyValue,
       'end_time': deadline?.toIso8601String(),
       'status': isActive ? 'Running' : 'Closed',
-      'platform_type': platformType,
+      'platform_kind': platformKind,
       'content_kind': contentKind,
     };
   }

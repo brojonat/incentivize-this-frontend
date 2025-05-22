@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart'; // For kDebugMode
 class ContentIdParser {
   /// Attempts to parse a content ID from a given input string (which might be a URL).
   ///
-  /// Takes the raw [input] from the user and the [platformType] (e.g., 'REDDIT', 'YOUTUBE', 'TWITCH').
+  /// Takes the raw [input] from the user and the [platformKind] (e.g., 'REDDIT', 'YOUTUBE', 'TWITCH').
   /// Returns the extracted ID if successful, otherwise returns the original [input].
-  static String parse(String input, String platformType) {
+  static String parse(String input, String platformKind) {
     final trimmedInput = input.trim();
     Uri? uri;
 
@@ -33,7 +33,7 @@ class ContentIdParser {
     }
 
     // Normalize platform type for comparison
-    final platform = platformType.toUpperCase();
+    final platform = platformKind.toUpperCase();
 
     try {
       switch (platform) {

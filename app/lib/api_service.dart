@@ -119,12 +119,41 @@ class ApiService {
     }
   }
 
+  // Search bounties
+  Future<List<Bounty>> searchBounties(String query, {int limit = 10}) async {
+    // final token = await _getAuthTokenForSearch(); // No token needed for public search
+    // if (token == null) {
+    //   throw Exception('Authentication token is required for search. Please ensure you are logged in.');
+    // }
+
+    try {
+      final response = await _client.get(
+        Uri.parse(
+            '$baseUrl/bounties/search?q=${Uri.encodeQueryComponent(query)}&limit=$limit'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Bounty.fromJson(json)).toList();
+      } else {
+        throw Exception(
+            'Failed to search bounties: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error searching bounties: $e');
+    }
+  }
+
   // Submit a claim for a bounty
   Future<Map<String, dynamic>> submitClaim({
     required String bountyId,
     required String contentId,
     required String walletAddress,
-    required String platformType,
+    required String platformKind,
     required String contentKind,
   }) async {
     try {
@@ -135,7 +164,7 @@ class ApiService {
           'bounty_id': bountyId,
           'content_id': contentId,
           'payout_wallet': walletAddress,
-          'platform': platformType,
+          'platform': platformKind,
           'content_kind': contentKind,
         }),
       );

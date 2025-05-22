@@ -74,7 +74,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
     try {
       final parsed = ContentIdParser.parse(
         rawInput,
-        widget.bounty.platformType,
+        widget.bounty.platformKind,
       );
       final didParse = parsed != rawInput;
       setState(() {
