@@ -4,11 +4,11 @@ class Bounty {
   final String description;
   final double bountyPerPost;
   final DateTime? deadline;
-  final bool isActive;
   final String platformKind;
   final double totalBounty;
   final double remainingBountyValue;
   final String contentKind;
+  final String rawStatus;
 
   Bounty({
     required this.id,
@@ -16,12 +16,31 @@ class Bounty {
     required this.description,
     required this.bountyPerPost,
     this.deadline,
-    this.isActive = true,
     required this.platformKind,
     required this.totalBounty,
     required this.remainingBountyValue,
     required this.contentKind,
+    required this.rawStatus,
   });
+
+  String get displayStatus {
+    switch (rawStatus) {
+      case 'AwaitingFunding':
+        return 'Awaiting Funding';
+      case 'TransferringFee':
+        return 'Transferring Fee';
+      case 'Listening':
+        return 'Listening';
+      case 'Paying':
+        return 'Paying';
+      case 'Refunded':
+        return 'Refunded';
+      case 'Cancelled':
+        return 'Cancelled';
+      default:
+        return rawStatus;
+    }
+  }
 
   int get totalPosts {
     if (bountyPerPost <= 0) return 0;
@@ -40,6 +59,10 @@ class Bounty {
     return '$remainingPosts out of $totalPosts remain';
   }
 
+  bool get isClaimable {
+    return !(rawStatus == 'Refunded' || rawStatus == 'Cancelled');
+  }
+
   factory Bounty.fromJson(Map<String, dynamic> json) {
     final List<dynamic> requirementsRaw = json['requirements'] ?? [];
     final List<String> requirements =
@@ -49,11 +72,9 @@ class Bounty {
         json['platform_kind']?.toString().toUpperCase() ?? 'Unknown Platform';
     final String defaultTitle = '$platform Bounty';
 
-    // Extract title from the first sentence of the first requirement
     String title = defaultTitle;
     if (requirements.isNotEmpty) {
       final firstRequirement = requirements.first;
-      // Split by common sentence endings. Add more if needed.
       final sentences = firstRequirement.split(RegExp(r'[.!?]'));
       if (sentences.isNotEmpty) {
         final firstSentence = sentences.first.trim();
@@ -83,10 +104,8 @@ class Bounty {
       deadline = DateTime.tryParse(json['end_time']);
     }
 
-    final bool isActive = json['status'] == 'Running';
-
-    // Assume content_kind is provided, default to 'Unknown' if not
     final String contentKind = json['content_kind']?.toString() ?? 'Unknown';
+    final String rawStatus = json['status']?.toString() ?? 'Unknown';
 
     return Bounty(
       id: json['workflow_id'] ?? '',
@@ -94,11 +113,11 @@ class Bounty {
       description: description,
       bountyPerPost: bountyPerPost,
       deadline: deadline,
-      isActive: isActive,
       platformKind: platform,
       totalBounty: totalBounty,
       remainingBountyValue: remainingBountyValue,
       contentKind: contentKind,
+      rawStatus: rawStatus,
     );
   }
 
@@ -111,7 +130,7 @@ class Bounty {
       'total_bounty': totalBounty,
       'remaining_bounty_value': remainingBountyValue,
       'end_time': deadline?.toIso8601String(),
-      'status': isActive ? 'Running' : 'Closed',
+      'status': rawStatus,
       'platform_kind': platformKind,
       'content_kind': contentKind,
     };

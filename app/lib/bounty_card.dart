@@ -52,7 +52,8 @@ class BountyCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: bounty.isActive
+                      color: bounty
+                              .isClaimable // Color is now based on Listening, Paying, or AwaitingFunding
                           ? theme.colorScheme.primary.withOpacity(0.1)
                           : theme.colorScheme.outline.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
@@ -61,19 +62,28 @@ class BountyCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          bounty.isActive
-                              ? Icons.verified_outlined
-                              : Icons.hourglass_empty,
+                          bounty.rawStatus == 'AwaitingFunding' ||
+                                  bounty.rawStatus == 'TransferringFee'
+                              ? Icons.hourglass_top_outlined
+                              : (bounty.rawStatus == 'Listening'
+                                  ? Icons.play_circle_outline
+                                  : (bounty.rawStatus == 'Paying'
+                                      ? Icons.payment_outlined
+                                      : (bounty.rawStatus == 'Refunded' ||
+                                              bounty.rawStatus == 'Cancelled'
+                                          ? Icons
+                                              .stop_circle_outlined // Changed to stop icon
+                                          : Icons.pause_circle_outline))),
                           size: 16,
-                          color: bounty.isActive
+                          color: bounty.isClaimable
                               ? theme.colorScheme.primary
                               : theme.colorScheme.outline,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          bounty.isActive ? 'Active' : 'Closed',
+                          bounty.displayStatus, // Use new displayStatus getter
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: bounty.isActive
+                            color: bounty.isClaimable
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.outline,
                             fontWeight: FontWeight.w500,

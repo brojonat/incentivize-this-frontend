@@ -364,7 +364,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: _currentBounty!.isActive
+                          color: _currentBounty!.isClaimable
                               ? theme.colorScheme.primary.withOpacity(0.1)
                               : theme.colorScheme.outline.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
@@ -373,19 +373,30 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              _currentBounty!.isActive
-                                  ? Icons.verified_outlined
-                                  : Icons.hourglass_empty,
+                              _currentBounty!.rawStatus == 'AwaitingFunding' ||
+                                      _currentBounty!.rawStatus ==
+                                          'TransferringFee'
+                                  ? Icons.hourglass_top_outlined
+                                  : (_currentBounty!.rawStatus == 'Listening'
+                                      ? Icons.play_circle_outline
+                                      : (_currentBounty!.rawStatus == 'Paying'
+                                          ? Icons.payment_outlined
+                                          : (_currentBounty!.rawStatus ==
+                                                      'Refunded' ||
+                                                  _currentBounty!.rawStatus ==
+                                                      'Cancelled'
+                                              ? Icons.stop_circle_outlined
+                                              : Icons.pause_circle_outline))),
                               size: 16,
-                              color: _currentBounty!.isActive
+                              color: _currentBounty!.isClaimable
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.outline,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              _currentBounty!.isActive ? 'Active' : 'Closed',
+                              _currentBounty!.displayStatus,
                               style: theme.textTheme.labelMedium?.copyWith(
-                                color: _currentBounty!.isActive
+                                color: _currentBounty!.isClaimable
                                     ? theme.colorScheme.primary
                                     : theme.colorScheme.outline,
                                 fontWeight: FontWeight.w500,
@@ -463,7 +474,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _currentBounty!.isActive
+      bottomNavigationBar: _currentBounty!.isClaimable
           ? Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -496,7 +507,12 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Claim This Bounty',
+                      _currentBounty!.displayStatus == 'Listening' &&
+                              !_currentBounty!.isClaimable
+                          ? 'Bounty Not Claimable'
+                          : (_currentBounty!.isClaimable
+                              ? 'Claim This Bounty'
+                              : 'Bounty: ${_currentBounty!.displayStatus}'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -532,12 +548,17 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.lock_outline,
+                      _currentBounty!.rawStatus == 'Refunded' ||
+                              _currentBounty!.rawStatus == 'Cancelled'
+                          ? Icons.cancel_outlined
+                          : Icons.lock_outline,
                       color: theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Bounty No Longer Available',
+                      _currentBounty!.displayStatus == 'Listening'
+                          ? 'Bounty Not Claimable'
+                          : 'Bounty: ${_currentBounty!.displayStatus}',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.5),
                         fontWeight: FontWeight.bold,
