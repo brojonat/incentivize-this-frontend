@@ -73,15 +73,94 @@ class Bounty {
     final String defaultTitle = '$platform Bounty';
 
     String title = defaultTitle;
+
     if (requirements.isNotEmpty) {
-      final firstRequirement = requirements.first;
-      final sentences = firstRequirement.split(RegExp(r'[.!?]'));
-      if (sentences.isNotEmpty) {
-        final firstSentence = sentences.first.trim();
-        if (firstSentence.isNotEmpty) {
-          title = firstSentence;
+      String candidateTitle = defaultTitle;
+
+      for (final reqContent in requirements) {
+        String currentReqTrimmed = reqContent.trim();
+        if (currentReqTrimmed.isEmpty) continue;
+
+        final sentences = currentReqTrimmed.split(RegExp(r'[.!?]'));
+        String firstSentence =
+            sentences.isNotEmpty ? sentences.first.trim() : currentReqTrimmed;
+
+        if (firstSentence.isEmpty) continue;
+
+        bool currentSentenceIsGenericOrTooShort = false;
+        String lowerSentence = firstSentence.toLowerCase();
+        String lowerPlatform = platform.toLowerCase();
+
+        if (firstSentence.length < 20 || firstSentence.split(' ').length < 3) {
+          currentSentenceIsGenericOrTooShort = true;
+        } else {
+          List<String> contentTypes = [
+            'post',
+            'comment',
+            'video',
+            'tweet',
+            'article',
+            'link',
+            'story',
+            'thread',
+            'bounty',
+            'task',
+            'submission',
+            'content',
+            'item',
+            'message'
+          ];
+          List<String> prefixes = [
+            "",
+            "a ",
+            "an ",
+            "the ",
+            "my ",
+            "this is ",
+            "this is a ",
+            "this is an ",
+            "create ",
+            "create a ",
+            "create an ",
+            "make ",
+            "make a ",
+            "make an ",
+            "submit ",
+            "submit a ",
+            "submit an ",
+            "write ",
+            "write a ",
+            "write an ",
+            "share ",
+            "share a ",
+            "share an ",
+            "looking for ",
+            "seeking "
+          ];
+
+          for (String type in contentTypes) {
+            String term = '$lowerPlatform $type';
+            for (String prefix in prefixes) {
+              if (lowerSentence == '$prefix$term') {
+                currentSentenceIsGenericOrTooShort = true;
+                break;
+              }
+            }
+            if (currentSentenceIsGenericOrTooShort) break;
+          }
+        }
+
+        if (!currentSentenceIsGenericOrTooShort) {
+          candidateTitle = firstSentence;
+          break;
         }
       }
+      title = candidateTitle;
+    }
+
+    const int maxTitleLength = 80;
+    if (title.length > maxTitleLength) {
+      title = '${title.substring(0, maxTitleLength - 3)}...';
     }
 
     final String description = requirements.isNotEmpty
@@ -108,7 +187,7 @@ class Bounty {
     final String rawStatus = json['status']?.toString() ?? 'Unknown';
 
     return Bounty(
-      id: json['workflow_id'] ?? '',
+      id: json['bounty_id'] ?? '',
       title: title,
       description: description,
       bountyPerPost: bountyPerPost,
@@ -123,7 +202,7 @@ class Bounty {
 
   Map<String, dynamic> toJson() {
     return {
-      'workflow_id': id,
+      'bounty_id': id,
       'title': title,
       'description': description,
       'bounty_per_post': bountyPerPost,
