@@ -6,6 +6,7 @@ import 'home_screen.dart';
 import 'bounty_detail_screen.dart';
 import 'bounty.dart';
 import 'storage_service.dart'; // For wallet address access if needed directly by router/screen
+import 'about_screen.dart'; // Import the AboutScreen
 
 // Potentially, ApiService might be needed here if we decide to pre-fetch
 // import 'api_service.dart';
@@ -37,6 +38,12 @@ final GoRouter appRouter = GoRouter(
           },
         ),
       ],
+    ),
+    GoRoute(
+      path: '/about', // Add the new route for AboutScreen
+      builder: (BuildContext context, GoRouterState state) {
+        return const AboutScreen();
+      },
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

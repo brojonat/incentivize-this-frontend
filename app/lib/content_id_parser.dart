@@ -108,6 +108,26 @@ class ContentIdParser {
           }
           break;
 
+        case 'INSTAGRAM': // New case for Instagram
+          if (uri.host.contains('instagram.com') &&
+              uri.pathSegments.isNotEmpty) {
+            final segments = uri.pathSegments;
+            if (segments.length >= 2 && segments[0] == 'p') {
+              final postId = segments[1];
+              if (postId.isNotEmpty) {
+                return postId;
+              }
+            }
+            // Handle /reel/{id} links as well, as they are common
+            if (segments.length >= 2 && segments[0] == 'reel') {
+              final reelId = segments[1];
+              if (reelId.isNotEmpty) {
+                return reelId;
+              }
+            }
+          }
+          break;
+
         case 'BLUESKY': // Updated case for Bluesky
           if (uri.host.contains('bsky.app')) {
             return trimmedInput; // Return the full URI if it's a bsky.app link

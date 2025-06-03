@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'storage_service.dart';
+import 'app_config_service.dart';
 
 class AuthPromptDialog extends StatefulWidget {
   // Callback function to indicate successful token saving
@@ -60,8 +61,23 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
     }
   }
 
-  Future<void> _launchBuyMeACoffee() async {
-    final url = Uri.parse('https://buymeacoffee.com/joh2avl');
+  Future<void> _launchCheckoutLink() async {
+    final supportUrlString =
+        Provider.of<AppConfigService>(context, listen: false)
+            .gumroadCheckoutUrl;
+    if (supportUrlString.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Checkout URL is not configured.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    final url = Uri.parse(supportUrlString);
     try {
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
         throw 'Could not launch $url';
@@ -114,13 +130,13 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
                   children: [
                     const TextSpan(text: 'Need a token? '),
                     TextSpan(
-                      text: 'buy me a coffee',
+                      text: 'Get a token via Gumroad',
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         decoration: TextDecoration.underline,
                       ),
                       recognizer: TapGestureRecognizer()
-                        ..onTap = _launchBuyMeACoffee,
+                        ..onTap = _launchCheckoutLink,
                     ),
                     const TextSpan(text: ' and I\'ll email one to you.'),
                   ],
@@ -134,7 +150,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
                   child: TextFormField(
                     controller: _jwtController,
                     decoration: InputDecoration(
-                      labelText: 'JWT Token',
+                      labelText: 'JWT (token from email)',
                       hintText: 'Paste your token here',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),

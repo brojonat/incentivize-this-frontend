@@ -389,6 +389,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       appBar: AppBar(
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '🥕',
@@ -401,6 +402,21 @@ class _HomeScreenState extends State<HomeScreen>
             Text(_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty
                 ? 'Search Results'
                 : 'IncentivizeThis'),
+            if (_activeSearchQuery == null || _activeSearchQuery!.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.info_outline_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 22,
+                  ),
+                  onPressed: () => context.go('/about'),
+                  tooltip: 'About',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
           ],
         ),
         elevation: 0,

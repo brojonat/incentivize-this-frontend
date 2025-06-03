@@ -3,15 +3,18 @@ import 'package:provider/provider.dart';
 
 import 'api_service.dart';
 import 'storage_service.dart';
+import 'app_config_service.dart';
 
 class ProviderSetup extends StatelessWidget {
   final Widget child;
   final String apiBaseUrl;
+  final String gumroadCheckoutUrl;
 
   const ProviderSetup({
     super.key,
     required this.child,
     required this.apiBaseUrl,
+    required this.gumroadCheckoutUrl,
   });
 
   @override
@@ -25,6 +28,10 @@ class ProviderSetup extends StatelessWidget {
         ),
         Provider<StorageService>(
           create: (_) => StorageService(),
+        ),
+        Provider<AppConfigService>(
+          create: (_) =>
+              AppConfigService(gumroadCheckoutUrl: gumroadCheckoutUrl),
         ),
       ],
       child: child,
