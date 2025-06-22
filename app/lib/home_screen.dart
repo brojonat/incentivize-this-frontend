@@ -10,7 +10,6 @@ import 'storage_service.dart';
 import 'bounty_card.dart';
 import 'loading_indicator.dart';
 // import 'bounty_detail_screen.dart'; // No longer directly navigating
-import 'auth_prompt_dialog.dart';
 import 'paid_bounty_item.dart'; // Import the new model
 import 'search_bounties_sheet.dart'; // Import the search sheet
 

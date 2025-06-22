@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'home_screen.dart';
 import 'bounty_detail_screen.dart';
 import 'bounty.dart';
-import 'storage_service.dart'; // For wallet address access if needed directly by router/screen
+// For wallet address access if needed directly by router/screen
 import 'about_screen.dart'; // Import the AboutScreen
+import 'marketing_screen.dart'; // Import the new marketing screen
 
 // Potentially, ApiService might be needed here if we decide to pre-fetch
 // import 'api_service.dart';
@@ -20,11 +20,17 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) {
+        return const MarketingScreen(); // New landing page
+      },
+    ),
+    GoRoute(
+      path: '/bounties', // Old home screen is now here
+      builder: (BuildContext context, GoRouterState state) {
         return const HomeScreen();
       },
       routes: <RouteBase>[
         GoRoute(
-          path: 'bounties/:bountyId',
+          path: ':bountyId', // Note: no leading '/'
           builder: (BuildContext context, GoRouterState state) {
             final bountyId = state.pathParameters['bountyId']!;
             final Bounty? bounty = state.extra as Bounty?;

@@ -308,7 +308,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                 context.pop();
               } else {
                 // If it can't pop (e.g., deep link), go to home
-                context.go('/');
+                context.go('/bounties');
               }
             }),
       ),

@@ -71,7 +71,7 @@ class AboutScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.home_rounded),
                 label: const Text('Explore Bounties'),
-                onPressed: () => context.go('/'),
+                onPressed: () => context.go('/bounties'),
                 style: ElevatedButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
