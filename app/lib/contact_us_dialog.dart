@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'api_service.dart';
 
 class ContactUsDialog extends StatefulWidget {
-  const ContactUsDialog({super.key});
+  final ApiService apiService;
+  const ContactUsDialog({super.key, required this.apiService});
 
   @override
   State<ContactUsDialog> createState() => _ContactUsDialogState();
@@ -32,8 +33,7 @@ class _ContactUsDialogState extends State<ContactUsDialog> {
       });
 
       try {
-        final apiService = Provider.of<ApiService>(context, listen: false);
-        await apiService.submitContactForm(
+        await widget.apiService.submitContactForm(
           name: _nameController.text,
           email: _emailController.text,
           message: _messageController.text,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import 'api_service.dart';
 import 'contact_us_dialog.dart';
 
 class MarketingScreen extends StatefulWidget {
@@ -418,10 +420,13 @@ class _MarketingScreenState extends State<MarketingScreen>
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 24, vertical: 16)),
                                       onPressed: () {
+                                        final apiService =
+                                            Provider.of<ApiService>(context,
+                                                listen: false);
                                         showDialog(
                                           context: context,
-                                          builder: (context) =>
-                                              const ContactUsDialog(),
+                                          builder: (context) => ContactUsDialog(
+                                              apiService: apiService),
                                         );
                                       }),
                                   const SizedBox(width: 20),
