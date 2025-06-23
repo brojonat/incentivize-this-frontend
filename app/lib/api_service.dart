@@ -181,4 +181,30 @@ class ApiService {
       throw Exception('Error submitting claim: $e');
     }
   }
+
+  // Submit contact us form
+  Future<void> submitContactForm({
+    String? name,
+    required String email,
+    required String message,
+  }) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/contact-us'),
+        headers: await _getHeaders(),
+        body: json.encode({
+          'name': name,
+          'email': email,
+          'message': message,
+        }),
+      );
+
+      if (response.statusCode != 201) {
+        throw Exception(
+            'Failed to submit contact form: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error submitting contact form: $e');
+    }
+  }
 }

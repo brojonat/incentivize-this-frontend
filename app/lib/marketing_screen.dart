@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+import 'contact_us_dialog.dart';
 
 class MarketingScreen extends StatefulWidget {
   const MarketingScreen({super.key});
@@ -192,7 +193,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Ads Suck',
+                                Text('Ads Suck.',
                                     style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold)),
@@ -259,13 +260,13 @@ class _MarketingScreenState extends State<MarketingScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Just Incentivize Creators Instead',
+                                Text('Just Incentivize Creators!',
                                     style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold)),
                                 SizedBox(height: 16),
                                 Text(
-                                    'If you want to advertise your local business (or just incentivize quality content), we\'ll fund bounties that match your niche and audience. We support a variety of platforms and media types (Reddit, Instagram, YouTube, and more).',
+                                    'Tell us what you want and where you want it (Reddit, Instagram, YouTube, etc.), and we\'ll fund bounties that match your niche and audience.',
                                     style:
                                         TextStyle(fontSize: 16, height: 1.5)),
                               ],
@@ -296,7 +297,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Regular Users Create Content',
+                                Text('Regular Users Post...',
                                     style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold)),
@@ -363,7 +364,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Get Paid',
+                                Text('...And Get Paid!',
                                     style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold)),
@@ -408,7 +409,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                                   ElevatedButton.icon(
                                       icon:
                                           const Icon(Icons.add_circle_outline),
-                                      label: const Text('Create a Bounty'),
+                                      label: const Text('Contact Us'),
                                       style: ElevatedButton.styleFrom(
                                           backgroundColor:
                                               theme.colorScheme.primary,
@@ -417,12 +418,11 @@ class _MarketingScreenState extends State<MarketingScreen>
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 24, vertical: 16)),
                                       onPressed: () {
-                                        final Uri emailLaunchUri = Uri(
-                                            scheme: 'mailto',
-                                            path: 'contact@incentivizethis.com',
-                                            query:
-                                                'subject=Bounty Creation Inquiry');
-                                        launchUrl(emailLaunchUri);
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) =>
+                                              const ContactUsDialog(),
+                                        );
                                       }),
                                   const SizedBox(width: 20),
                                   ElevatedButton.icon(
