@@ -1,9 +1,24 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'api_service.dart';
 import 'contact_us_dialog.dart';
+
+class _PlatformTheme {
+  final String name;
+  final Color textColor;
+  final Decoration decoration;
+
+  _PlatformTheme({
+    required this.name,
+    required this.textColor,
+    required this.decoration,
+  });
+}
 
 class MarketingScreen extends StatefulWidget {
   const MarketingScreen({super.key});
@@ -17,6 +32,64 @@ class _MarketingScreenState extends State<MarketingScreen>
   late final ScrollController _scrollController;
   late final AnimationController _arrowAnimationController;
   late final Animation<Offset> _arrowAnimation;
+  late final Timer _platformAnimationTimer;
+  double _platformTextMaxWidth = 0;
+
+  int _currentPlatformIndex = 0;
+  final List<_PlatformTheme> _platforms = [
+    _PlatformTheme(
+      name: 'Reddit',
+      textColor: Colors.white,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 234, 78, 0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    _PlatformTheme(
+      name: 'YouTube',
+      textColor: Colors.white,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 255, 33, 33),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    _PlatformTheme(
+      name: 'Bluesky',
+      textColor: const Color.fromARGB(255, 255, 255, 255),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 45, 165, 245),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    _PlatformTheme(
+      name: 'Instagram',
+      textColor: Colors.white,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF833AB4), Color(0xFFF77737)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    _PlatformTheme(
+      name: 'Twitch',
+      textColor: Colors.white,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 127, 21, 157),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    _PlatformTheme(
+      name: 'HackerNews',
+      textColor: const Color.fromARGB(255, 250, 239, 227),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF6600),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+  ];
 
   double _imageOffset = 0.0;
   double _textOpacity = 1.0;
@@ -45,6 +118,39 @@ class _MarketingScreenState extends State<MarketingScreen>
       parent: _arrowAnimationController,
       curve: Curves.easeInOut,
     ));
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _calculateMaxWidth());
+
+    _platformAnimationTimer =
+        Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentPlatformIndex =
+              (_currentPlatformIndex + 1) % _platforms.length;
+        });
+      }
+    });
+  }
+
+  void _calculateMaxWidth() {
+    double maxWidth = 0;
+    const double horizontalPadding = 16.0; // 8px on each side
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          height: 1.5,
+          fontWeight: FontWeight.bold,
+        );
+
+    for (final platform in _platforms) {
+      final painter = TextPainter(
+        text: TextSpan(text: platform.name, style: textStyle),
+        maxLines: 1,
+        textDirection: TextDirection.ltr,
+      )..layout();
+      maxWidth = max(maxWidth, painter.width);
+    }
+    setState(() {
+      _platformTextMaxWidth = maxWidth + horizontalPadding;
+    });
   }
 
   @override
@@ -52,6 +158,7 @@ class _MarketingScreenState extends State<MarketingScreen>
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _arrowAnimationController.dispose();
+    _platformAnimationTimer.cancel();
     super.dispose();
   }
 
@@ -258,19 +365,84 @@ class _MarketingScreenState extends State<MarketingScreen>
                           child: Transform.translate(
                             offset:
                                 Offset(50 * (1 - _section3AnimationValue), 0),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Just Incentivize Creators!',
+                                const Text('Just Incentivize Creators!',
                                     style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold)),
-                                SizedBox(height: 16),
-                                Text(
-                                    'Tell us what you want and where you want it (Reddit, Instagram, YouTube, etc.), and we\'ll fund bounties that match your niche and audience.',
-                                    style:
-                                        TextStyle(fontSize: 16, height: 1.5)),
+                                const SizedBox(height: 16),
+                                RichText(
+                                  text: TextSpan(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.copyWith(
+                                          height: 1.5,
+                                        ),
+                                    children: <InlineSpan>[
+                                      const TextSpan(
+                                          text:
+                                              'Tell us what you want and where you want it (e.g., '),
+                                      WidgetSpan(
+                                        baseline: TextBaseline.alphabetic,
+                                        alignment: PlaceholderAlignment.middle,
+                                        child: SizedBox(
+                                          width: _platformTextMaxWidth,
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(
+                                                milliseconds: 500),
+                                            transitionBuilder: (Widget child,
+                                                Animation<double> animation) {
+                                              return FadeTransition(
+                                                opacity: animation,
+                                                child: ScaleTransition(
+                                                  scale: animation,
+                                                  child: child,
+                                                ),
+                                              );
+                                            },
+                                            child: Container(
+                                              key: ValueKey<String>(_platforms[
+                                                      _currentPlatformIndex]
+                                                  .name),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
+                                              decoration: _platforms[
+                                                      _currentPlatformIndex]
+                                                  .decoration,
+                                              child: Center(
+                                                child: Text(
+                                                  _platforms[
+                                                          _currentPlatformIndex]
+                                                      .name,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.copyWith(
+                                                        height: 1.5,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: _platforms[
+                                                                _currentPlatformIndex]
+                                                            .textColor,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const TextSpan(
+                                          text:
+                                              '), and we\'ll fund bounties that match your niche and audience.'),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ),
