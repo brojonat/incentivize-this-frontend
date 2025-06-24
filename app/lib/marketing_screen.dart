@@ -201,7 +201,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                                         fontWeight: FontWeight.bold)),
                                 SizedBox(height: 16),
                                 Text(
-                                    'Yuck. Nobody wants to see this. Nobody\'s clicking on this. At least not on purpose.',
+                                    'Yuck. Nobody\'s clicking on this. At least not on purpose.',
                                     style:
                                         TextStyle(fontSize: 16, height: 1.5)),
                               ],
