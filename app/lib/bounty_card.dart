@@ -108,7 +108,7 @@ class BountyCard extends StatelessWidget {
                         InfoChip(
                           icon: Icons.monetization_on_outlined,
                           text:
-                              '${bounty.bountyPerPost.toStringAsFixed(2)} per post',
+                              '\$${bounty.bountyPerPost.toStringAsFixed(2)} per post',
                           color: Colors.green.shade700,
                         ),
                         InfoChip(
