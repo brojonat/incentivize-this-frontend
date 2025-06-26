@@ -12,6 +12,7 @@ import 'loading_indicator.dart';
 // import 'bounty_detail_screen.dart'; // No longer directly navigating
 import 'paid_bounty_item.dart'; // Import the new model
 import 'search_bounties_sheet.dart'; // Import the search sheet
+import 'responsive_layout.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -387,6 +388,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 10.0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -398,9 +400,13 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
             const SizedBox(width: 8),
-            Text(_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty
-                ? 'Search Results'
-                : 'IncentivizeThis'),
+            Expanded(
+              child: Text(
+                  _activeSearchQuery != null && _activeSearchQuery!.isNotEmpty
+                      ? 'Search Results'
+                      : 'IncentivizeThis',
+                  overflow: TextOverflow.ellipsis),
+            ),
             if (_activeSearchQuery == null || _activeSearchQuery!.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
@@ -460,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ],
       ),
-      body: _buildBody(theme),
+      body: CenteredConstrainedView(child: _buildBody(theme)),
     );
   }
 

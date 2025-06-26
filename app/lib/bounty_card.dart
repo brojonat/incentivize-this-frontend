@@ -18,6 +18,16 @@ class BountyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, yyyy'); // Date formatter
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final titleStyle = isSmallScreen
+        ? theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          )
+        : theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          );
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -39,10 +49,7 @@ class BountyCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       bounty.title,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                      style: titleStyle,
                       maxLines: 2, // Allow two lines for title
                       overflow: TextOverflow.ellipsis,
                     ),

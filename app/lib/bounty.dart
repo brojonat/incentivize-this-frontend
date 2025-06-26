@@ -69,89 +69,82 @@ class Bounty {
         requirementsRaw.whereType<String>().map((req) => req).toList();
 
     final String platform =
-        json['platform_kind']?.toString().toUpperCase() ?? 'Unknown Platform';
+        json['platform_kind']?.toString().trim().toUpperCase() ??
+            'Unknown Platform';
     final String defaultTitle = '$platform Bounty';
 
     String title = defaultTitle;
 
     if (requirements.isNotEmpty) {
       String candidateTitle = defaultTitle;
+      bool titleFound = false;
+
+      final String contentKind =
+          json['content_kind']?.toString().trim().toLowerCase() ?? 'unknown';
 
       for (final reqContent in requirements) {
         String currentReqTrimmed = reqContent.trim();
         if (currentReqTrimmed.isEmpty) continue;
 
         final sentences = currentReqTrimmed.split(RegExp(r'[.!?]'));
-        String firstSentence =
-            sentences.isNotEmpty ? sentences.first.trim() : currentReqTrimmed;
 
-        if (firstSentence.isEmpty) continue;
+        for (final sentence in sentences) {
+          final firstSentence = sentence.trim();
+          if (firstSentence.isEmpty) continue;
 
-        bool currentSentenceIsGenericOrTooShort = false;
-        String lowerSentence = firstSentence.toLowerCase();
-        String lowerPlatform = platform.toLowerCase();
+          bool currentSentenceIsGenericOrTooShort = false;
+          String lowerSentence = firstSentence.toLowerCase();
+          String lowerPlatform = platform.toLowerCase();
 
-        if (firstSentence.length < 20 || firstSentence.split(' ').length < 3) {
-          currentSentenceIsGenericOrTooShort = true;
-        } else {
-          List<String> contentTypes = [
-            'post',
-            'comment',
-            'video',
-            'tweet',
-            'article',
-            'link',
-            'story',
-            'thread',
-            'bounty',
-            'task',
-            'submission',
-            'content',
-            'item',
-            'message'
-          ];
-          List<String> prefixes = [
-            "",
-            "a ",
-            "an ",
-            "the ",
-            "my ",
-            "this is ",
-            "this is a ",
-            "this is an ",
-            "create ",
-            "create a ",
-            "create an ",
-            "make ",
-            "make a ",
-            "make an ",
-            "submit ",
-            "submit a ",
-            "submit an ",
-            "write ",
-            "write a ",
-            "write an ",
-            "share ",
-            "share a ",
-            "share an ",
-            "looking for ",
-            "seeking "
-          ];
+          if (firstSentence.length < 20 ||
+              firstSentence.split(' ').length < 3) {
+            currentSentenceIsGenericOrTooShort = true;
+          } else {
+            List<String> prefixes = [
+              "",
+              "a ",
+              "an ",
+              "the ",
+              "my ",
+              "this is ",
+              "this is a ",
+              "this is an ",
+              "this bounty is for a ",
+              "create ",
+              "create a ",
+              "create an ",
+              "make ",
+              "make a ",
+              "make an ",
+              "submit ",
+              "submit a ",
+              "submit an ",
+              "write ",
+              "write a ",
+              "write an ",
+              "share ",
+              "share a ",
+              "share an ",
+              "looking for ",
+              "seeking "
+            ];
 
-          for (String type in contentTypes) {
-            String term = '$lowerPlatform $type';
+            String term = '$lowerPlatform $contentKind';
             for (String prefix in prefixes) {
-              if (lowerSentence == '$prefix$term') {
+              if (lowerSentence.startsWith('$prefix$term')) {
                 currentSentenceIsGenericOrTooShort = true;
                 break;
               }
             }
-            if (currentSentenceIsGenericOrTooShort) break;
+          }
+
+          if (!currentSentenceIsGenericOrTooShort) {
+            candidateTitle = firstSentence;
+            titleFound = true;
+            break;
           }
         }
-
-        if (!currentSentenceIsGenericOrTooShort) {
-          candidateTitle = firstSentence;
+        if (titleFound) {
           break;
         }
       }
@@ -183,7 +176,8 @@ class Bounty {
       deadline = DateTime.tryParse(json['end_time']);
     }
 
-    final String contentKind = json['content_kind']?.toString() ?? 'Unknown';
+    final String finalContentKind =
+        json['content_kind']?.toString() ?? 'Unknown';
     final String rawStatus = json['status']?.toString() ?? 'Unknown';
 
     return Bounty(
@@ -195,7 +189,7 @@ class Bounty {
       platformKind: platform,
       totalBounty: totalBounty,
       remainingBountyValue: remainingBountyValue,
-      contentKind: contentKind,
+      contentKind: finalContentKind,
       rawStatus: rawStatus,
     );
   }
