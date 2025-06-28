@@ -10,11 +10,13 @@ import 'contact_us_dialog.dart';
 
 class _MarketingLine {
   final String text;
+  final String platformName;
   final Decoration decoration;
   final Color textColor;
 
   _MarketingLine({
     required this.text,
+    required this.platformName,
     required this.decoration,
     required this.textColor,
   });
@@ -33,42 +35,47 @@ class _MarketingScreenState extends State<MarketingScreen>
   late final AnimationController _arrowAnimationController;
   late final Animation<Offset> _arrowAnimation;
   late final Timer _platformAnimationTimer;
-  double _platformTextMaxWidth = 0;
 
   int _currentLineIndex = 0;
   final List<_MarketingLine> _marketingLines = [
     _MarketingLine(
-        text: 'a reddit post on r/woodworking about Home Depot',
+        text: 'a post on Reddit',
+        platformName: 'Reddit',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 234, 78, 0),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a comment on r/callaway with at least 50 upvotes',
+        text: 'a comment on Reddit with at least 50 upvotes',
+        platformName: 'Reddit',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 234, 78, 0),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a video on YouTube about my new restaurant',
+        text: 'a video on YouTube',
+        platformName: 'YouTube',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 255, 33, 33),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a YouTube comment mentioning Koolaid with at least 10k likes',
+        text: 'a comment on YouTube with at least 10k views',
+        platformName: 'YouTube',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 255, 33, 33),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a post on Bluesky with at least 1k views',
+        text: 'a post on Bluesky',
+        platformName: 'Bluesky',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 45, 165, 245),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a post on Instagram about coffee with at least 1k views',
+        text: 'a post on Instagram',
+        platformName: 'Instagram',
         decoration: BoxDecoration(
             gradient: const LinearGradient(
                 colors: [Color(0xFF833AB4), Color(0xFFF77737)],
@@ -78,25 +85,28 @@ class _MarketingScreenState extends State<MarketingScreen>
         textColor: Colors.white),
     _MarketingLine(
         text: 'a video on Twitch with at least 1k views',
+        platformName: 'Twitch',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 127, 21, 157),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a Twitch clip about DotA 2',
+        text: 'a clip on Twitch',
+        platformName: 'Twitch',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 127, 21, 157),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text:
-            'a post on HackerNews about my new startup with at least 100 score',
+        text: 'a post on HackerNews with at least 100 score',
+        platformName: 'HackerNews',
         decoration: BoxDecoration(
             color: const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(8)),
         textColor: const Color.fromARGB(255, 250, 239, 227)),
     _MarketingLine(
-        text: 'a comment on HackerNews about golang with at least 100 upvotes',
+        text: 'a comment on HackerNews',
+        platformName: 'HackerNews',
         decoration: BoxDecoration(
             color: const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(8)),
@@ -133,8 +143,6 @@ class _MarketingScreenState extends State<MarketingScreen>
       curve: Curves.easeInOut,
     ));
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _calculateMaxWidth());
-
     _platformAnimationTimer =
         Timer.periodic(const Duration(seconds: 3), (timer) {
       if (mounted) {
@@ -142,28 +150,6 @@ class _MarketingScreenState extends State<MarketingScreen>
           _currentLineIndex = (_currentLineIndex + 1) % _marketingLines.length;
         });
       }
-    });
-  }
-
-  void _calculateMaxWidth() {
-    if (_marketingLines.isEmpty) return;
-    double maxWidth = 0;
-    const double horizontalPadding = 16.0; // 8px on each side
-    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
-          height: 1.5,
-          fontWeight: FontWeight.bold,
-        );
-
-    for (final line in _marketingLines) {
-      final painter = TextPainter(
-        text: TextSpan(text: line.text, style: textStyle),
-        maxLines: 1,
-        textDirection: TextDirection.ltr,
-      )..layout();
-      maxWidth = max(maxWidth, painter.width);
-    }
-    setState(() {
-      _platformTextMaxWidth = maxWidth + horizontalPadding;
     });
   }
 
@@ -381,80 +367,71 @@ class _MarketingScreenState extends State<MarketingScreen>
                                 Offset(50 * (1 - _section3AnimationValue), 0),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 const Text('Just Incentivize Creators!',
                                     style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 16),
-                                RichText(
-                                  text: TextSpan(
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge
-                                        ?.copyWith(
-                                          height: 1.5,
-                                        ),
-                                    children: <InlineSpan>[
-                                      const TextSpan(text: 'Tell us you want '),
-                                      WidgetSpan(
-                                        baseline: TextBaseline.alphabetic,
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: SizedBox(
-                                          width: _platformTextMaxWidth,
-                                          child: AnimatedSwitcher(
-                                            duration: const Duration(
-                                                milliseconds: 500),
-                                            transitionBuilder: (Widget child,
-                                                Animation<double> animation) {
-                                              return FadeTransition(
-                                                opacity: animation,
-                                                child: ScaleTransition(
-                                                  scale: animation,
-                                                  child: child,
-                                                ),
-                                              );
-                                            },
-                                            child: Container(
-                                              key: ValueKey<String>(
-                                                  _marketingLines[
-                                                          _currentLineIndex]
-                                                      .text),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 2),
-                                              decoration: _marketingLines[
-                                                      _currentLineIndex]
-                                                  .decoration,
-                                              child: Center(
-                                                child: Text(
-                                                  _marketingLines[
-                                                          _currentLineIndex]
-                                                      .text,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyLarge
-                                                      ?.copyWith(
-                                                        height: 1.5,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: _marketingLines[
-                                                                _currentLineIndex]
-                                                            .textColor,
-                                                      ),
-                                                ),
-                                              ),
-                                            ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text('Tell us you want:',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(height: 1.5)),
+                                    const SizedBox(height: 8),
+                                    AnimatedSwitcher(
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                      transitionBuilder: (Widget child,
+                                          Animation<double> animation) {
+                                        final offsetAnimation = Tween<Offset>(
+                                          begin: const Offset(0.0, 0.25),
+                                          end: Offset.zero,
+                                        ).animate(
+                                          CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeInOut,
                                           ),
+                                        );
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: SlideTransition(
+                                            position: offsetAnimation,
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      child: RichText(
+                                        key: ValueKey<String>(
+                                            _marketingLines[_currentLineIndex]
+                                                .text),
+                                        textAlign: TextAlign.center,
+                                        text: TextSpan(
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.copyWith(
+                                                  height: 1.5,
+                                                  fontWeight: FontWeight.bold),
+                                          children: _buildStyledMarketingText(
+                                              context,
+                                              _marketingLines[
+                                                  _currentLineIndex]),
                                         ),
                                       ),
-                                      const TextSpan(
-                                          text:
-                                              ' and we\'ll fund bounties that match your niche and audience.'),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                        'and we\'ll fund bounties that match your niche and audience.',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(height: 1.5)),
+                                  ],
                                 ),
                               ],
                             ),
@@ -641,5 +618,38 @@ class _MarketingScreenState extends State<MarketingScreen>
         ],
       ),
     );
+  }
+
+  List<InlineSpan> _buildStyledMarketingText(
+      BuildContext context, _MarketingLine line) {
+    final text = line.text;
+    final platform = line.platformName;
+    final firstIndex = text.indexOf(platform);
+
+    if (firstIndex == -1) {
+      return [TextSpan(text: text)]; // Fallback
+    }
+
+    final beforeText = text.substring(0, firstIndex);
+    final afterText = text.substring(firstIndex + platform.length);
+
+    final platformStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          height: 1.5,
+          fontWeight: FontWeight.bold,
+          color: line.textColor,
+        );
+
+    return [
+      TextSpan(text: beforeText),
+      WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: line.decoration,
+          child: Text(platform, style: platformStyle),
+        ),
+      ),
+      TextSpan(text: afterText),
+    ];
   }
 }
