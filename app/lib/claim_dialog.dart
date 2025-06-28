@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'bounty.dart';
 import 'content_id_parser.dart';
 
@@ -167,31 +169,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
               ],
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: theme.colorScheme.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'You\'re claiming the "${widget.bounty.title}" bounty with a reward of ${widget.bounty.bountyPerPost.toStringAsFixed(2)} per post',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildWalletHelpSection(theme),
             const SizedBox(height: 24),
             Text(
               'Content ID or URL',
@@ -369,5 +347,73 @@ class _ClaimDialogState extends State<ClaimDialog> {
         ),
       ),
     );
+  }
+
+  Widget _buildWalletHelpSection(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.help_outline_rounded,
+                  color: theme.colorScheme.secondary),
+              const SizedBox(width: 8),
+              Text(
+                "Don't have a wallet?",
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          RichText(
+            text: TextSpan(
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+              children: [
+                const TextSpan(
+                    text: "No problem! It's super easy to make one with "),
+                _buildLinkSpan(theme, 'MetaMask', 'https://metamask.io/'),
+                const TextSpan(text: ' or '),
+                _buildLinkSpan(theme, 'Phantom', 'https://phantom.app/'),
+                const TextSpan(text: '.'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  TextSpan _buildLinkSpan(ThemeData theme, String text, String url) {
+    return TextSpan(
+      text: text,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: theme.colorScheme.primary,
+        decoration: TextDecoration.underline,
+        decorationColor: theme.colorScheme.primary,
+        fontWeight: FontWeight.w500,
+      ),
+      recognizer: TapGestureRecognizer()..onTap = () => _launchURL(url),
+    );
+  }
+
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // Handle error, e.g., show a snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open the link.')),
+        );
+      }
+    }
   }
 }

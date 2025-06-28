@@ -39,42 +39,43 @@ class _MarketingScreenState extends State<MarketingScreen>
   int _currentLineIndex = 0;
   final List<_MarketingLine> _marketingLines = [
     _MarketingLine(
-        text: 'a post on Reddit',
+        text: 'a Reddit post with at least 1k upvotes mentioning Home Depot',
         platformName: 'Reddit',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 234, 78, 0),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a comment on Reddit with at least 50 upvotes',
+        text: 'a Reddit comment in r/OrangeCounty about SuzieCakes bakery',
         platformName: 'Reddit',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 234, 78, 0),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a video on YouTube',
+        text: 'a YouTube video about Mark Weins visiting Lisbon, Portugal',
         platformName: 'YouTube',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 255, 33, 33),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a comment on YouTube with at least 10k views',
+        text:
+            'a YouTube comment with at least 100 likes on a video about oysters',
         platformName: 'YouTube',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 255, 33, 33),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a post on Bluesky',
+        text: 'a Bluesky post about how A.I. doesn\'t live up to the hype',
         platformName: 'Bluesky',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 45, 165, 245),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a post on Instagram',
+        text: 'an Instagram post with at least 2M likes about Positano, Italy',
         platformName: 'Instagram',
         decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -84,28 +85,28 @@ class _MarketingScreenState extends State<MarketingScreen>
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a video on Twitch with at least 1k views',
+        text: 'a Twitch video about Dota 2 with at least 100k views',
         platformName: 'Twitch',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 127, 21, 157),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a clip on Twitch',
+        text: 'a Twitch clip from Purge\'s channel with at least 25k views',
         platformName: 'Twitch',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 127, 21, 157),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a post on HackerNews with at least 100 score',
+        text: 'a HackerNews post about Temporal with at least 100 upvotes',
         platformName: 'HackerNews',
         decoration: BoxDecoration(
             color: const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(8)),
         textColor: const Color.fromARGB(255, 250, 239, 227)),
     _MarketingLine(
-        text: 'a comment on HackerNews',
+        text: 'a HackerNews comment with tips on using Goose',
         platformName: 'HackerNews',
         decoration: BoxDecoration(
             color: const Color(0xFFFF6600),
@@ -413,7 +414,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                                         text: TextSpan(
                                           style: Theme.of(context)
                                               .textTheme
-                                              .bodyLarge
+                                              .titleMedium
                                               ?.copyWith(
                                                   height: 1.5,
                                                   fontWeight: FontWeight.bold),
@@ -633,7 +634,7 @@ class _MarketingScreenState extends State<MarketingScreen>
     final beforeText = text.substring(0, firstIndex);
     final afterText = text.substring(firstIndex + platform.length);
 
-    final platformStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+    final platformStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
           height: 1.5,
           fontWeight: FontWeight.bold,
           color: line.textColor,

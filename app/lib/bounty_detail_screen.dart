@@ -5,6 +5,8 @@ import 'dart:async';
 import 'package:go_router/go_router.dart'; // For navigation
 import 'package:flutter_html/flutter_html.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/gestures.dart';
 
 import 'bounty.dart';
 import 'claim_dialog.dart';
@@ -420,7 +422,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                     horizontal: 24.0, vertical: 16.0),
                 child: _buildClaimButton(theme),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(

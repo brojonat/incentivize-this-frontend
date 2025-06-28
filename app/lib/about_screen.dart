@@ -34,6 +34,13 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+            _buildSectionTitle(theme, 'Our Goal'),
+            const SizedBox(height: 12),
+            Text(
+              'We help businesses dangle carrots in front of creators who can rise to the occasion and snag a bite!',
+              style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+            ),
+            const SizedBox(height: 24),
             _buildSectionTitle(theme, 'How It Works'),
             const SizedBox(height: 12),
             _buildStep(
@@ -41,7 +48,7 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.list_alt_rounded,
               title: '1. Discover Bounties',
               description:
-                  'Browse through a list of available bounties. Each bounty has specific requirements and a reward for content that meets them.',
+                  'Browse available bounties. Each bounty has a reward for content that meets specific requirements.',
             ),
             const SizedBox(height: 16),
             _buildStep(
@@ -49,7 +56,7 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.link_rounded,
               title: '2. Submit Your Content',
               description:
-                  'Found a bounty you can fulfill? Great! Create your content (e.g., a Reddit post, a YouTube video, a tweet) according to the bounty requirements. Then, submit a link to your content through our platform.',
+                  'Found a bounty you can fulfill? Great! Create your content and submit a link to it through our platform.',
             ),
             const SizedBox(height: 16),
             _buildStep(
@@ -57,14 +64,7 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.account_balance_wallet_rounded,
               title: '3. Get Paid!',
               description:
-                  'We\'ll review your submission and if it meets the bounty criteria, the reward will be sent to your wallet. Cash money baby, it\'s that simple!',
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle(theme, 'Our Goal'),
-            const SizedBox(height: 12),
-            Text(
-              'We connect creators with opportunities to get paid for producing quality content that people want. Whether you\'re a writer, video creator, or social media enthusiast, IncentivizeThis provides a platform to monetize your content. Look, you\'re on the Internet anyway, you might as well get paid for it.',
-              style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+                  'We\'ll review your submission and if it fulfills the bounty, we\'ll send the reward to your wallet. It\'s that simple!',
             ),
             const SizedBox(height: 32),
             Center(
