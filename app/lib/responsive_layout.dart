@@ -7,12 +7,13 @@ class CenteredConstrainedView extends StatelessWidget {
   const CenteredConstrainedView({
     super.key,
     required this.child,
-    this.maxWidth = 1200.0, // A common max-width for web content
+    this.maxWidth = 600.0, // A common max-width for web content
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: child,

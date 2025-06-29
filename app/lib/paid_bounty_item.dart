@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 
 class PaidBountyItem {
   final String signature;
@@ -63,7 +64,7 @@ class PaidBountyItem {
   // Helper for formatted amount
   String get formattedAmount {
     // Example: $123.45
-    final formatCurrency = NumberFormat.simpleCurrency(decimalDigits: 2);
+    final formatCurrency = intl.NumberFormat.simpleCurrency(decimalDigits: 2);
     return formatCurrency.format(amount);
   }
 }

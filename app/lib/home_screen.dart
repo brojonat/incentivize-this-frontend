@@ -812,7 +812,7 @@ class _HomeScreenState extends State<HomeScreen>
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
         foregroundColor: theme.colorScheme.secondary,
-        child: Icon(Icons.receipt_long, size: 20),
+        child: const Icon(Icons.receipt_long, size: 20),
       ),
       title: Text(
         item.formattedAmount,

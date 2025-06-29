@@ -118,87 +118,9 @@ class Bounty {
             'Unknown Platform';
     final String defaultTitle = '$platform Bounty';
 
-    String title = defaultTitle;
-
-    if (requirements.isNotEmpty) {
-      String candidateTitle = defaultTitle;
-      bool titleFound = false;
-
-      final String contentKind =
-          json['content_kind']?.toString().trim().toLowerCase() ?? 'unknown';
-
-      for (final reqContent in requirements) {
-        String currentReqTrimmed = reqContent.trim();
-        if (currentReqTrimmed.isEmpty) continue;
-
-        final sentences = currentReqTrimmed.split(RegExp(r'[.!?]'));
-
-        for (final sentence in sentences) {
-          final firstSentence = sentence.trim();
-          if (firstSentence.isEmpty) continue;
-
-          bool currentSentenceIsGenericOrTooShort = false;
-          String lowerSentence = firstSentence.toLowerCase();
-          String lowerPlatform = platform.toLowerCase();
-
-          if (firstSentence.length < 20 ||
-              firstSentence.split(' ').length < 3) {
-            currentSentenceIsGenericOrTooShort = true;
-          } else {
-            List<String> prefixes = [
-              "",
-              "a ",
-              "an ",
-              "the ",
-              "my ",
-              "this is ",
-              "this is a ",
-              "this is an ",
-              "this bounty is for a ",
-              "create ",
-              "create a ",
-              "create an ",
-              "make ",
-              "make a ",
-              "make an ",
-              "submit ",
-              "submit a ",
-              "submit an ",
-              "write ",
-              "write a ",
-              "write an ",
-              "share ",
-              "share a ",
-              "share an ",
-              "looking for ",
-              "seeking "
-            ];
-
-            String term = '$lowerPlatform $contentKind';
-            for (String prefix in prefixes) {
-              if (lowerSentence.startsWith('$prefix$term')) {
-                currentSentenceIsGenericOrTooShort = true;
-                break;
-              }
-            }
-          }
-
-          if (!currentSentenceIsGenericOrTooShort) {
-            candidateTitle = firstSentence;
-            titleFound = true;
-            break;
-          }
-        }
-        if (titleFound) {
-          break;
-        }
-      }
-      title = candidateTitle;
-    }
-
-    const int maxTitleLength = 80;
-    if (title.length > maxTitleLength) {
-      title = '${title.substring(0, maxTitleLength - 3)}...';
+    String title = json['title']?.toString().trim() ?? defaultTitle;
+    if (title.isEmpty) {
+      title = defaultTitle;
     }
 
     final String description = requirements.isNotEmpty
