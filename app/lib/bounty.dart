@@ -1,3 +1,19 @@
+import 'package:flutter/material.dart';
+
+class TierInfo {
+  final String name;
+  final Color backgroundColor;
+  final Color textColor;
+  final IconData icon;
+
+  TierInfo({
+    required this.name,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.icon,
+  });
+}
+
 class Bounty {
   final String id;
   final String title;
@@ -9,6 +25,7 @@ class Bounty {
   final double remainingBountyValue;
   final String contentKind;
   final String rawStatus;
+  final int tier;
 
   Bounty({
     required this.id,
@@ -21,6 +38,7 @@ class Bounty {
     required this.remainingBountyValue,
     required this.contentKind,
     required this.rawStatus,
+    required this.tier,
   });
 
   String get displayStatus {
@@ -61,6 +79,33 @@ class Bounty {
 
   bool get isClaimable {
     return !(rawStatus == 'Refunded' || rawStatus == 'Cancelled');
+  }
+
+  TierInfo tierInfo(ThemeData theme) {
+    switch (tier) {
+      case 8: // Altruist
+        return TierInfo(
+          name: 'Altruist',
+          backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+          textColor: const Color(0xFFD81B60), // Toned down pink
+          icon: Icons.volunteer_activism,
+        );
+      case 4: // Premium
+        return TierInfo(
+          name: 'Premium',
+          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+          textColor: theme.colorScheme.primary,
+          icon: Icons.star,
+        );
+      case 0: // Black Hat
+      default:
+        return TierInfo(
+          name: 'Black Hat',
+          backgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
+          textColor: theme.colorScheme.onSurface,
+          icon: Icons.security,
+        );
+    }
   }
 
   factory Bounty.fromJson(Map<String, dynamic> json) {
@@ -179,6 +224,7 @@ class Bounty {
     final String finalContentKind =
         json['content_kind']?.toString() ?? 'Unknown';
     final String rawStatus = json['status']?.toString() ?? 'Unknown';
+    final int tier = (json['tier'] is int) ? json['tier'] : 0;
 
     return Bounty(
       id: json['bounty_id'] ?? '',
@@ -191,6 +237,7 @@ class Bounty {
       remainingBountyValue: remainingBountyValue,
       contentKind: finalContentKind,
       rawStatus: rawStatus,
+      tier: tier,
     );
   }
 
@@ -206,6 +253,7 @@ class Bounty {
       'status': rawStatus,
       'platform_kind': platformKind,
       'content_kind': contentKind,
+      'tier': tier,
     };
   }
 }

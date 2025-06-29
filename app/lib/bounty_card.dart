@@ -19,6 +19,7 @@ class BountyCard extends StatelessWidget {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, yyyy'); // Date formatter
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final isVerySmallScreen = MediaQuery.of(context).size.width < 450;
     final titleStyle = isSmallScreen
         ? theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
@@ -114,9 +115,13 @@ class BountyCard extends StatelessWidget {
                       children: [
                         InfoChip(
                           icon: Icons.monetization_on_outlined,
-                          text:
-                              '\$${bounty.bountyPerPost.toStringAsFixed(2)} per post',
-                          color: Colors.green.shade700,
+                          text: bounty.bountyPerPost.isFinite &&
+                                  bounty.bountyPerPost > 0
+                              ? '\$${bounty.bountyPerPost.toStringAsFixed(2)} per post'
+                              : 'Unfunded',
+                          color: bounty.bountyPerPost > 0
+                              ? Colors.green.shade700
+                              : Colors.grey.shade600,
                         ),
                         InfoChip(
                           icon: Icons.device_hub_outlined,
@@ -140,23 +145,16 @@ class BountyCard extends StatelessWidget {
                             text: dateFormat.format(bounty.deadline!),
                             color: theme.colorScheme.tertiary,
                           ),
+                        if (bounty.tier != 8)
+                          InfoChip(
+                            icon: bounty.tierInfo(theme).icon,
+                            text: bounty.tierInfo(theme).name,
+                            color: bounty.tierInfo(theme).textColor,
+                            backgroundColor:
+                                bounty.tierInfo(theme).backgroundColor,
+                            textColor: bounty.tierInfo(theme).textColor,
+                          ),
                       ],
-                    ),
-                  ),
-                  // Keep View Details button on the right
-                  Container(
-                    // Removed animation for simplicity in card view
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary
-                          .withOpacity(0.1), // Subtle background
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color:
-                          theme.colorScheme.primary, // Icon color matches theme
                     ),
                   ),
                 ],

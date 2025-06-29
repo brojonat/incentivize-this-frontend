@@ -397,6 +397,16 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                             ],
                           ),
                         ),
+                        if (_currentBounty!.tier != 8)
+                          InfoChip(
+                            icon: _currentBounty!.tierInfo(theme).icon,
+                            text: _currentBounty!.tierInfo(theme).name,
+                            color: _currentBounty!.tierInfo(theme).textColor,
+                            backgroundColor:
+                                _currentBounty!.tierInfo(theme).backgroundColor,
+                            textColor:
+                                _currentBounty!.tierInfo(theme).textColor,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 16),
