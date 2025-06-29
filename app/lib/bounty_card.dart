@@ -117,7 +117,7 @@ class BountyCard extends StatelessWidget {
                           icon: Icons.monetization_on_outlined,
                           text: bounty.bountyPerPost.isFinite &&
                                   bounty.bountyPerPost > 0
-                              ? '\$${bounty.bountyPerPost.toStringAsFixed(2)} per post'
+                              ? '\$${bounty.bountyPerPost.toStringAsFixed(2)}'
                               : 'Unfunded',
                           color: bounty.bountyPerPost > 0
                               ? Colors.green.shade700

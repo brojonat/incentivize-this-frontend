@@ -326,7 +326,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                         InfoChip(
                           icon: Icons.monetization_on_outlined,
                           text:
-                              '\$${_currentBounty!.bountyPerPost.toStringAsFixed(2)} per post',
+                              '\$${_currentBounty!.bountyPerPost.toStringAsFixed(2)}',
                           color: Colors.green.shade700,
                         ),
                         InfoChip(
