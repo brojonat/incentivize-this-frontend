@@ -250,7 +250,6 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MMM d, yyyy');
 
     if (_isLoadingBounty && _currentBounty == null) {
       return Scaffold(
@@ -344,59 +343,17 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                           text: _currentBounty!.remainingPostsDisplay,
                           color: theme.colorScheme.secondary,
                         ),
-                        if (_currentBounty!.deadline != null &&
-                            _currentBounty!.deadline!.year > 1970)
-                          InfoChip(
-                              icon: Icons.schedule,
-                              text:
-                                  dateFormat.format(_currentBounty!.deadline!),
-                              color: theme.colorScheme.tertiary),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _currentBounty!.isClaimable
-                                ? theme.colorScheme.primary.withOpacity(0.1)
-                                : theme.colorScheme.outline.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _currentBounty!.rawStatus ==
-                                            'AwaitingFunding' ||
-                                        _currentBounty!.rawStatus ==
-                                            'TransferringFee'
-                                    ? Icons.hourglass_top_outlined
-                                    : (_currentBounty!.rawStatus == 'Listening'
-                                        ? Icons.play_circle_outline
-                                        : (_currentBounty!.rawStatus == 'Paying'
-                                            ? Icons.payment_outlined
-                                            : (_currentBounty!.rawStatus ==
-                                                        'Refunded' ||
-                                                    _currentBounty!.rawStatus ==
-                                                        'Cancelled'
-                                                ? Icons.stop_circle_outlined
-                                                : Icons.pause_circle_outline))),
-                                size: 16,
-                                color: _currentBounty!.isClaimable
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.outline,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _currentBounty!.displayStatus,
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: _currentBounty!.isClaimable
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.outline,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        Builder(builder: (context) {
+                          final statusInfo =
+                              _currentBounty!.getStatusInfo(theme);
+                          return InfoChip(
+                            icon: statusInfo.icon,
+                            text: statusInfo.text,
+                            color: statusInfo.textColor,
+                            backgroundColor: statusInfo.backgroundColor,
+                            textColor: statusInfo.textColor,
+                          );
+                        }),
                         if (_currentBounty!.tier != 8)
                           InfoChip(
                             icon: _currentBounty!.tierInfo(theme).icon,

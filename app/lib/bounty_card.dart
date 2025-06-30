@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Import intl for date formatting
 
 import 'bounty.dart';
 import 'info_chip.dart';
@@ -17,7 +16,6 @@ class BountyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MMM d, yyyy'); // Date formatter
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
     final isVerySmallScreen = MediaQuery.of(context).size.width < 450;
     final titleStyle = isSmallScreen
@@ -56,50 +54,16 @@ class BountyCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8), // Add spacing
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: bounty
-                              .isClaimable // Color is now based on Listening, Paying, or AwaitingFunding
-                          ? theme.colorScheme.primary.withOpacity(0.1)
-                          : theme.colorScheme.outline.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          bounty.rawStatus == 'AwaitingFunding' ||
-                                  bounty.rawStatus == 'TransferringFee'
-                              ? Icons.hourglass_top_outlined
-                              : (bounty.rawStatus == 'Listening'
-                                  ? Icons.play_circle_outline
-                                  : (bounty.rawStatus == 'Paying'
-                                      ? Icons.payment_outlined
-                                      : (bounty.rawStatus == 'Refunded' ||
-                                              bounty.rawStatus == 'Cancelled'
-                                          ? Icons
-                                              .stop_circle_outlined // Changed to stop icon
-                                          : Icons.pause_circle_outline))),
-                          size: 16,
-                          color: bounty.isClaimable
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outline,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          bounty.displayStatus, // Use new displayStatus getter
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: bounty.isClaimable
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.outline,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  Builder(builder: (context) {
+                    final statusInfo = bounty.getStatusInfo(theme);
+                    return InfoChip(
+                      icon: statusInfo.icon,
+                      text: statusInfo.text,
+                      color: statusInfo.textColor,
+                      backgroundColor: statusInfo.backgroundColor,
+                      textColor: statusInfo.textColor,
+                    );
+                  }),
                 ],
               ),
               const SizedBox(height: 12), // Increased spacing
@@ -138,13 +102,6 @@ class BountyCard extends StatelessWidget {
                           text: bounty.remainingPostsDisplay,
                           color: theme.colorScheme.secondary,
                         ),
-                        if (bounty.deadline != null &&
-                            bounty.deadline!.year > 1970)
-                          InfoChip(
-                            icon: Icons.schedule,
-                            text: dateFormat.format(bounty.deadline!),
-                            color: theme.colorScheme.tertiary,
-                          ),
                         if (bounty.tier != 8)
                           InfoChip(
                             icon: bounty.tierInfo(theme).icon,

@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 
+class StatusInfo {
+  final String text;
+  final IconData icon;
+  final Color textColor;
+  final Color backgroundColor;
+
+  StatusInfo({
+    required this.text,
+    required this.icon,
+    required this.textColor,
+    required this.backgroundColor,
+  });
+}
+
 class TierInfo {
   final String name;
   final Color backgroundColor;
@@ -77,8 +91,91 @@ class Bounty {
     return '$remainingPosts out of $totalPosts remain';
   }
 
+  bool get isActive {
+    // An active bounty is one that has not been cancelled or refunded.
+    return rawStatus != 'Refunded' && rawStatus != 'Cancelled';
+  }
+
   bool get isClaimable {
-    return !(rawStatus == 'Refunded' || rawStatus == 'Cancelled');
+    // A bounty is only claimable when it's actively listening for submissions.
+    return rawStatus == 'Listening';
+  }
+
+  int? get daysRemaining {
+    if (deadline == null) {
+      return null;
+    }
+    // Use DateUtils.dateOnly to compare dates without the time component for a
+    // more accurate "days left" calculation.
+    final today = DateUtils.dateOnly(DateTime.now());
+    final deadlineDate = DateUtils.dateOnly(deadline!);
+    return deadlineDate.difference(today).inDays;
+  }
+
+  StatusInfo getStatusInfo(ThemeData theme) {
+    final days = daysRemaining;
+
+    // First, check for deadline-related statuses if the bounty is claimable
+    if (days != null && isClaimable) {
+      final Color textColor;
+      final String text;
+      final IconData icon;
+
+      if (days < 0) {
+        text = 'Ended';
+        icon = Icons.hourglass_disabled_outlined;
+        textColor = theme.colorScheme.outline;
+      } else if (days == 0) {
+        text = 'Ends today';
+        icon = Icons.hourglass_bottom_outlined;
+        textColor = theme.colorScheme.primary;
+      } else if (days == 1) {
+        text = '1 day left';
+        icon = Icons.hourglass_bottom_outlined;
+        textColor = theme.colorScheme.primary;
+      } else {
+        text = '$days days left';
+        icon = Icons.hourglass_bottom_outlined;
+        textColor = theme.colorScheme.primary;
+      }
+      return StatusInfo(
+        text: text,
+        icon: icon,
+        textColor: textColor,
+        backgroundColor: textColor.withOpacity(0.1),
+      );
+    }
+
+    // Fallback to other statuses
+    final IconData icon;
+    switch (rawStatus) {
+      case 'AwaitingFunding':
+      case 'TransferringFee':
+        icon = Icons.hourglass_top_outlined;
+        break;
+      case 'Listening':
+        icon = Icons.play_circle_outline;
+        break;
+      case 'Paying':
+        icon = Icons.payment_outlined;
+        break;
+      case 'Refunded':
+      case 'Cancelled':
+        icon = Icons.stop_circle_outlined;
+        break;
+      default:
+        icon = Icons.pause_circle_outline;
+    }
+
+    final Color textColor =
+        isActive ? theme.colorScheme.primary : theme.colorScheme.outline;
+
+    return StatusInfo(
+      text: displayStatus,
+      icon: icon,
+      textColor: textColor,
+      backgroundColor: textColor.withOpacity(0.1),
+    );
   }
 
   TierInfo tierInfo(ThemeData theme) {
@@ -139,8 +236,8 @@ class Bounty {
         : 0.0;
 
     DateTime? deadline;
-    if (json['end_time'] is String && json['end_time'].isNotEmpty) {
-      deadline = DateTime.tryParse(json['end_time']);
+    if (json['end_at'] is String && (json['end_at'] as String).isNotEmpty) {
+      deadline = DateTime.tryParse(json['end_at'] as String);
     }
 
     final String finalContentKind =
@@ -171,7 +268,7 @@ class Bounty {
       'bounty_per_post': bountyPerPost,
       'total_bounty': totalBounty,
       'remaining_bounty_value': remainingBountyValue,
-      'end_time': deadline?.toIso8601String(),
+      'end_at': deadline?.toIso8601String(),
       'status': rawStatus,
       'platform_kind': platformKind,
       'content_kind': contentKind,
