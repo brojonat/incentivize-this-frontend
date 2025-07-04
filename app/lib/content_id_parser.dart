@@ -96,6 +96,25 @@ class ContentIdParser {
           }
           break;
 
+        case 'TRIPADVISOR':
+          if (uri.host.contains('tripadvisor.com')) {
+            // Extracts locationID and reviewID from URLs like:
+            // ...-d(locationID)-...-r(reviewID)-...
+            final tripadvisorRegex = RegExp(r'-d(\d+)-r(\d+)');
+            final match = tripadvisorRegex.firstMatch(uri.path);
+            if (match != null && match.groupCount == 2) {
+              final locationId = match.group(1);
+              final reviewId = match.group(2);
+              if (locationId != null &&
+                  locationId.isNotEmpty &&
+                  reviewId != null &&
+                  reviewId.isNotEmpty) {
+                return '$locationId:$reviewId';
+              }
+            }
+          }
+          break;
+
         case 'HACKERNEWS': // New case for Hacker News
           if (uri.host.contains('news.ycombinator.com') &&
               uri.pathSegments.isNotEmpty &&
