@@ -190,8 +190,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Claim submitted successfully! ID: ${result["claim_id"] ?? "N/A"}'),
+            content: const Text('Claim submitted successfully!'),
             backgroundColor: Theme.of(context).colorScheme.secondary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

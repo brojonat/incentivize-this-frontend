@@ -157,9 +157,9 @@ class ApiService {
     required String contentKind,
   }) async {
     try {
-      final response = await _client.post(
+      final response = await http.post(
         Uri.parse('$baseUrl/bounties/assess'),
-        headers: await _getHeaders(), // Await the headers
+        headers: await _getHeaders(),
         body: json.encode({
           'bounty_id': bountyId,
           'content_id': contentId,
@@ -169,14 +169,13 @@ class ApiService {
         }),
       );
 
-      final responseData = json.decode(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return responseData;
-      } else {
+      if (response.statusCode != 200) {
+        final body = json.decode(response.body);
         throw Exception(
-            'Failed to submit claim: ${responseData['reason'] ?? response.statusCode}');
+            'Failed to submit claim: ${body['error'] ?? response.body}');
       }
+
+      return json.decode(response.body);
     } catch (e) {
       throw Exception('Error submitting claim: $e');
     }

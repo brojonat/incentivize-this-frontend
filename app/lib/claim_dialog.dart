@@ -79,9 +79,19 @@ class _ClaimDialogState extends State<ClaimDialog> {
         widget.bounty.platformKind,
       );
       final didParse = parsed != rawInput;
+
+      // If it's a URL but didn't parse, we show an error.
+      // Otherwise, we accept it as a raw ID.
+      final isUrl = rawInput.startsWith('http') || rawInput.startsWith('www.');
+
       setState(() {
-        _parsedContentId = didParse ? parsed : null;
-        _parsingError = null;
+        if (isUrl && !didParse) {
+          _parsedContentId = null;
+          _parsingError = "The provided URL is not valid for this platform.";
+        } else {
+          _parsedContentId = didParse ? parsed : null;
+          _parsingError = null;
+        }
       });
     } catch (e) {
       setState(() {
@@ -92,7 +102,25 @@ class _ClaimDialogState extends State<ClaimDialog> {
   }
 
   void _submitClaim() {
-    _parseContentIdInput();
+    _parseContentIdInput(); // This will set _parsingError if needed
+
+    // Check for validation errors from both fields and parsing
+    setState(() {
+      _contentIdError = _contentIdController.text.trim().isEmpty
+          ? 'Content ID is required'
+          : null;
+
+      _walletAddressError = _walletAddressController.text.trim().isEmpty
+          ? 'Wallet address is required'
+          : null;
+    });
+
+    // Stop if there are any errors
+    if (_contentIdError != null ||
+        _walletAddressError != null ||
+        _parsingError != null) {
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;

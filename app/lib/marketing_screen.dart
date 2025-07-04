@@ -112,6 +112,21 @@ class _MarketingScreenState extends State<MarketingScreen>
             color: const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(8)),
         textColor: const Color.fromARGB(255, 250, 239, 227)),
+    _MarketingLine(
+        text:
+            'a Tripadvisor review for a hotel in Honolulu with a 5 star rating',
+        platformName: 'Tripadvisor',
+        decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 44, 175, 122),
+            borderRadius: BorderRadius.circular(8)),
+        textColor: Colors.white),
+    _MarketingLine(
+        text: 'a Tripadvisor review for a restaurant in New York',
+        platformName: 'Tripadvisor',
+        decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 44, 175, 122),
+            borderRadius: BorderRadius.circular(8)),
+        textColor: Colors.white),
   ];
 
   double _imageOffset = 0.0;
