@@ -114,15 +114,15 @@ class _MarketingScreenState extends State<MarketingScreen>
         textColor: const Color.fromARGB(255, 250, 239, 227)),
     _MarketingLine(
         text:
-            'a Tripadvisor review for a hotel in Honolulu with a 5 star rating',
-        platformName: 'Tripadvisor',
+            'a TripAdvisor review for a hotel in Honolulu with a 5 star rating',
+        platformName: 'TripAdvisor',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 44, 175, 122),
             borderRadius: BorderRadius.circular(8)),
         textColor: Colors.white),
     _MarketingLine(
-        text: 'a Tripadvisor review for a restaurant in New York',
-        platformName: 'Tripadvisor',
+        text: 'a TripAdvisor review for a restaurant in New York',
+        platformName: 'TripAdvisor',
         decoration: BoxDecoration(
             color: const Color.fromARGB(255, 44, 175, 122),
             borderRadius: BorderRadius.circular(8)),
