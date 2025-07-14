@@ -84,8 +84,13 @@ class _ClaimDialogState extends State<ClaimDialog> {
       // Otherwise, we accept it as a raw ID.
       final isUrl = rawInput.startsWith('http') || rawInput.startsWith('www.');
 
+      // For Bluesky, the "parsed" value is the URL itself, so didParse is false.
+      // We must treat this as a valid case.
+      final isBlueskyAndValid =
+          widget.bounty.platformKind.toUpperCase() == 'BLUESKY' && isUrl;
+
       setState(() {
-        if (isUrl && !didParse) {
+        if (isUrl && !didParse && !isBlueskyAndValid) {
           _parsedContentId = null;
           _parsingError = "The provided URL is not valid for this platform.";
         } else {
@@ -104,6 +109,12 @@ class _ClaimDialogState extends State<ClaimDialog> {
   void _submitClaim() {
     _parseContentIdInput(); // This will set _parsingError if needed
 
+    // For Bluesky, we bypass the parsing check because the URL is the ID.
+    final isBlueskyAndValid =
+        widget.bounty.platformKind.toUpperCase() == 'BLUESKY' &&
+            (_contentIdController.text.trim().startsWith('http') ||
+                _contentIdController.text.trim().startsWith('www.'));
+
     // Check for validation errors from both fields and parsing
     setState(() {
       _contentIdError = _contentIdController.text.trim().isEmpty
@@ -118,7 +129,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
     // Stop if there are any errors
     if (_contentIdError != null ||
         _walletAddressError != null ||
-        _parsingError != null) {
+        (_parsingError != null && !isBlueskyAndValid)) {
       return;
     }
 

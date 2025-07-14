@@ -147,7 +147,7 @@ class ContentIdParser {
           }
           break;
 
-        case 'BLUESKY': // Updated case for Bluesky
+        case 'BLUESKY':
           if (uri.host.contains('bsky.app')) {
             return trimmedInput; // Return the full URI if it's a bsky.app link
           }
