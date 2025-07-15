@@ -32,14 +32,9 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: ':bountyId', // Note: no leading '/'
           builder: (BuildContext context, GoRouterState state) {
-            final bountyId = state.pathParameters['bountyId']!;
-            final Bounty? bounty = state.extra as Bounty?;
-
-            // We will modify BountyDetailScreen to accept bountyId and an optional initialBounty.
-            // It will also handle its own wallet address fetching and claim submission.
             return BountyDetailScreen(
-              bountyId: bountyId,
-              initialBounty: bounty,
+              bountyId: state.pathParameters['bountyId']!,
+              initialBounty: state.extra as Bounty?,
             );
           },
         ),

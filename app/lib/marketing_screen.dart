@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'api_service.dart';
+import 'clueso_video_player.dart';
 import 'contact_us_dialog.dart';
 
 class _MarketingLine {
@@ -35,6 +36,9 @@ class _MarketingScreenState extends State<MarketingScreen>
   late final AnimationController _arrowAnimationController;
   late final Animation<Offset> _arrowAnimation;
   late final Timer _platformAnimationTimer;
+
+  final GlobalKey _heroContentKey = GlobalKey();
+  double _heroContentHeight = 0;
 
   int _currentLineIndex = 0;
   final List<_MarketingLine> _marketingLines = [
@@ -183,6 +187,15 @@ class _MarketingScreenState extends State<MarketingScreen>
     final screenHeight = MediaQuery.of(context).size.height;
     final offset = _scrollController.offset;
 
+    if (_heroContentKey.currentContext != null) {
+      final heroHeight = _heroContentKey.currentContext!.size!.height;
+      if (heroHeight != _heroContentHeight) {
+        setState(() {
+          _heroContentHeight = heroHeight;
+        });
+      }
+    }
+
     setState(() {
       _imageOffset = offset * 0.5;
 
@@ -200,14 +213,17 @@ class _MarketingScreenState extends State<MarketingScreen>
       }
       _arrowOpacity = _arrowOpacity.clamp(0.0, 1.0);
 
-      _section2AnimationValue =
-          _calculateAnimationValue(offset, screenHeight, 1);
-      _section3AnimationValue =
-          _calculateAnimationValue(offset, screenHeight, 2);
-      _section4AnimationValue =
-          _calculateAnimationValue(offset, screenHeight, 3);
-      _section5AnimationValue =
-          _calculateAnimationValue(offset, screenHeight, 4);
+      final animationStartOffset =
+          _heroContentHeight > 0 ? _heroContentHeight : screenHeight;
+
+      _section2AnimationValue = _calculateAnimationValue(
+          offset, screenHeight, 1, animationStartOffset);
+      _section3AnimationValue = _calculateAnimationValue(
+          offset, screenHeight, 2, animationStartOffset);
+      _section4AnimationValue = _calculateAnimationValue(
+          offset, screenHeight, 3, animationStartOffset);
+      _section5AnimationValue = _calculateAnimationValue(
+          offset, screenHeight, 4, animationStartOffset);
 
       if (_scrollController.position.hasContentDimensions) {
         final maxScroll = _scrollController.position.maxScrollExtent;
@@ -224,12 +240,12 @@ class _MarketingScreenState extends State<MarketingScreen>
     });
   }
 
-  double _calculateAnimationValue(
-      double offset, double screenHeight, int section) {
+  double _calculateAnimationValue(double offset, double screenHeight,
+      int section, double animationStartOffset) {
     final sectionHeight = 500.0;
-    final sectionStart = screenHeight + (section - 1) * sectionHeight;
+    final sectionStart = animationStartOffset + (section - 1) * sectionHeight;
     final animationStart = sectionStart - screenHeight * 0.8;
-    final animationEnd = sectionStart;
+    final animationEnd = sectionStart + sectionHeight * 0.5;
 
     double value;
     if (offset >= animationStart && offset <= animationEnd) {
@@ -253,50 +269,75 @@ class _MarketingScreenState extends State<MarketingScreen>
           Positioned.fill(
             child: Transform.translate(
               offset: Offset(0, -_imageOffset),
-              child: Image.asset(
-                'assets/images/marketing-carrot.jpg',
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
+              child: OverflowBox(
+                maxHeight: double.infinity,
+                child: Image.asset(
+                  'assets/images/marketing-carrot.jpg',
+                  fit: BoxFit.cover,
+                  alignment: const Alignment(0.0, 0.0),
+                ),
               ),
             ),
           ),
           CustomScrollView(
             controller: _scrollController,
             slivers: <Widget>[
+              // Add a SliverToBoxAdapter to place the video player
+              SliverToBoxAdapter(
+                child: Center(
+                  // Center the player
+                  child: Container(
+                    key: _heroContentKey,
+                    padding: const EdgeInsets.only(
+                        top: 150.0, left: 24.0, right: 24.0, bottom: 24.0),
+                    constraints:
+                        const BoxConstraints(maxWidth: 800), // Max width
+                    child: Column(
+                      children: [
+                        Opacity(
+                          opacity: _arrowOpacity,
+                          child: SlideTransition(
+                            position: _arrowAnimation,
+                            child: const Icon(Icons.keyboard_arrow_down,
+                                color: Colors.white, size: 48),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        Opacity(
+                          opacity: _textOpacity,
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: const Text('Welcome to IncentivizeThis',
+                                style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 330.0),
+                          child: ClipRRect(
+                            borderRadius:
+                                BorderRadius.circular(16.0), // Rounded corners
+                            child: const CluesoVideoPlayer(
+                              videoId: '2d30eedc-4b2d-4851-a3c0-475885a4f26e',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               // Hero Section
               SliverToBoxAdapter(
                 child: Container(
-                  height: screenHeight,
+                  height: screenHeight - 250,
                   alignment: Alignment.center,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Opacity(
-                        opacity: _textOpacity,
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Text('Welcome to IncentivizeThis',
-                              style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      Opacity(
-                        opacity: _arrowOpacity,
-                        child: SlideTransition(
-                          position: _arrowAnimation,
-                          child: const Icon(Icons.keyboard_arrow_down,
-                              color: Colors.white, size: 48),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
               // "Ads Suck" Section
@@ -483,7 +524,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                                         fontWeight: FontWeight.bold)),
                                 SizedBox(height: 16),
                                 Text(
-                                    'People post on the Internet all the time. Thanks to this unremarkable comment, I spent thousands at a local lumber business instead of the big box stores!',
+                                    'Just 3 upvotes. That\'s all it took to steer thousands of dollars away from a big-box retailer and into the hands of a local business owner.',
                                     style:
                                         TextStyle(fontSize: 16, height: 1.5)),
                               ],
@@ -550,7 +591,7 @@ class _MarketingScreenState extends State<MarketingScreen>
                                         fontWeight: FontWeight.bold)),
                                 SizedBox(height: 16),
                                 Text(
-                                    'Anyone can submit their content for review. If it meets the bounty criteria, the user gets paid with USDC. Everyone wins, it\'s that easy!',
+                                    'Anyone can submit their content for review. If it meets the bounty criteria, they get paid instantly with USDC!',
                                     style:
                                         TextStyle(fontSize: 16, height: 1.5)),
                               ],
