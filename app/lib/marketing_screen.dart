@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'api_service.dart';
 import 'clueso_video_player.dart';
 import 'contact_us_dialog.dart';
+import 'create_bounty_dialog.dart';
 
 class _MarketingLine {
   final String text;
@@ -624,42 +625,82 @@ class _MarketingScreenState extends State<MarketingScreen>
                                     ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 32),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 20.0,
+                                runSpacing: 20.0,
                                 children: [
-                                  ElevatedButton.icon(
-                                      icon:
-                                          const Icon(Icons.add_circle_outline),
-                                      label: const Text('Contact Us'),
-                                      style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              theme.colorScheme.primary,
-                                          foregroundColor:
-                                              theme.colorScheme.onPrimary,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 24, vertical: 16)),
-                                      onPressed: () {
-                                        final apiService =
-                                            Provider.of<ApiService>(context,
-                                                listen: false);
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => ContactUsDialog(
-                                              apiService: apiService),
-                                        );
-                                      }),
-                                  const SizedBox(width: 20),
-                                  ElevatedButton.icon(
-                                      icon: const Icon(Icons.search),
-                                      label: const Text('Explore Bounties'),
-                                      style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              theme.colorScheme.secondary,
-                                          foregroundColor:
-                                              theme.colorScheme.onSecondary,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 24, vertical: 16)),
-                                      onPressed: () => context.go('/bounties')),
+                                  // Primary Action
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            const CreateBountyDialog(),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          theme.colorScheme.primary,
+                                      foregroundColor:
+                                          theme.colorScheme.onPrimary,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24, vertical: 16),
+                                      textStyle:
+                                          theme.textTheme.labelLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text('Create a Bounty'),
+                                  ),
+                                  // Secondary Action
+                                  OutlinedButton(
+                                    onPressed: () =>
+                                        GoRouter.of(context).go('/bounties'),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24, vertical: 16),
+                                      textStyle:
+                                          theme.textTheme.labelLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      side: BorderSide(
+                                        color: theme.colorScheme.primary,
+                                        width: 2,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text('View Bounties'),
+                                  ),
+                                  // Tertiary Action
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      final apiService =
+                                          Provider.of<ApiService>(context,
+                                              listen: false);
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => ContactUsDialog(
+                                            apiService: apiService),
+                                      );
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24, vertical: 16),
+                                      side: BorderSide(
+                                        color: theme.colorScheme.outline,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text('Contact Us'),
+                                  ),
                                 ],
                               ),
                             ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'bounty.dart';
 import 'content_id_parser.dart';
+import 'notification_service.dart';
 
 class ClaimDialog extends StatefulWidget {
   final Bounty bounty;
@@ -454,9 +455,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
     } else {
       // Handle error, e.g., show a snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open the link.')),
-        );
+        NotificationService.showError('Could not open the link.');
       }
     }
   }

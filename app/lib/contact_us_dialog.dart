@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'api_service.dart';
+import 'notification_service.dart';
 
 class ContactUsDialog extends StatefulWidget {
   final ApiService apiService;
@@ -41,15 +42,11 @@ class _ContactUsDialogState extends State<ContactUsDialog> {
 
         if (mounted) {
           Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thank you for your message!')),
-          );
+          NotificationService.showSuccess('Thank you for your message! We\'ll get back to you shortly.');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to send message: $e')),
-          );
+          NotificationService.showError('Failed to send message: $e');
         }
       } finally {
         if (mounted) {

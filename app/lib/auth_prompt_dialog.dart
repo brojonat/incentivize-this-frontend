@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'storage_service.dart';
 import 'app_config_service.dart';
+import 'notification_service.dart';
 
 class AuthPromptDialog extends StatefulWidget {
   // Callback function to indicate successful token saving
@@ -67,12 +68,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
             .gumroadCheckoutUrl;
     if (supportUrlString.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Checkout URL is not configured.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        NotificationService.showError('Checkout URL is not configured.');
       }
       return;
     }
@@ -84,12 +80,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not open link: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        NotificationService.showError('Could not open link: $e');
       }
     }
   }
@@ -103,7 +94,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
         children: [
           Icon(Icons.lock_open, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          const Text('Authentication Required'),
+          const Expanded(child: Text('Authentication Required')),
         ],
       ),
       content: SingleChildScrollView(
@@ -114,7 +105,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Please enter your JWT access token to submit a claim.',
+                'Please enter your access token to submit a claim.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),

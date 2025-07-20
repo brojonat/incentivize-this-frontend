@@ -33,10 +33,15 @@ class ApiService {
   }
 
   // Fetch all bounties
-  Future<List<Bounty>> fetchBounties() async {
+  Future<List<Bounty>> fetchBounties({String? funderWallet}) async {
     try {
+      var uri = Uri.parse('$baseUrl/bounties');
+      if (funderWallet != null && funderWallet.isNotEmpty) {
+        uri = uri.replace(queryParameters: {'funder_wallet': funderWallet});
+      }
+
       final response = await _client.get(
-        Uri.parse('$baseUrl/bounties'),
+        uri,
         headers: await _getHeaders(), // Await the headers
       );
 
@@ -204,6 +209,55 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error submitting contact form: $e');
+    }
+  }
+
+  // Create a new bounty
+  Future<Map<String, dynamic>> createBounty({
+    required List<String> requirements,
+    required double bountyPerPost,
+    required double totalBounty,
+    required String timeoutDuration,
+    required String token,
+  }) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/bounties'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'requirements': requirements,
+          'bounty_per_post': bountyPerPost,
+          'total_bounty': totalBounty,
+          'timeout_duration': timeoutDuration,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
+      } else {
+        throw Exception(
+            'Failed to create bounty: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error creating bounty: $e');
+    }
+  }
+
+  // Fetch app configuration
+  Future<Map<String, dynamic>> fetchAppConfig() async {
+    try {
+      final response = await _client.get(Uri.parse('$baseUrl/config'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception(
+            'Failed to load app config: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching app config: $e');
     }
   }
 }

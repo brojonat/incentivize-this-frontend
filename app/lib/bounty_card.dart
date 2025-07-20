@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'api_service.dart';
 import 'bounty.dart';
+import 'funding_qr_dialog.dart';
 import 'info_chip.dart';
+import 'notification_service.dart';
 
 class BountyCard extends StatelessWidget {
   final Bounty bounty;
@@ -116,6 +120,58 @@ class BountyCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (bounty.rawStatus == 'AwaitingFunding') ...[
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      if (bounty.totalCharged == null ||
+                          bounty.paymentTimeoutExpiresAt == null) {
+                        NotificationService.showError(
+                            'Funding information is not available for this bounty.');
+                        return;
+                      }
+
+                      final apiService =
+                          Provider.of<ApiService>(context, listen: false);
+                      try {
+                        final config = await apiService.fetchAppConfig();
+                        final walletAddress = config['escrow_wallet'];
+                        final usdcMintAddress = config['usdc_mint_address'];
+
+                        if (walletAddress == null || usdcMintAddress == null) {
+                          throw Exception('Configuration is missing');
+                        }
+
+                        showDialog(
+                          context: context,
+                          builder: (context) => FundingQrDialog(
+                            bountyId: bounty.id,
+                            totalCharged: bounty.totalCharged!,
+                            paymentTimeoutExpiresAt:
+                                bounty.paymentTimeoutExpiresAt!,
+                            walletAddress: walletAddress,
+                            usdcMintAddress: usdcMintAddress,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  'Could not load funding information: $e')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.qr_code_scanner),
+                    label: const Text('Fund Bounty'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

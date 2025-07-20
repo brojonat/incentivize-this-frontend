@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen>
   Set<String> _selectedPlatforms = {};
   double? _minRewardFilter;
   double? _maxRewardFilter;
+  String? _funderWalletFilter;
 
   @override
   void initState() {
@@ -70,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _startPolling() {
     _pollingTimer?.cancel(); // Cancel any existing timer
-    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (mounted && _activeSearchQuery == null) {
         // Only poll if not actively searching
         _loadData();
@@ -97,8 +98,9 @@ class _HomeScreenState extends State<HomeScreen>
         // Perform search
         fetchedBounties = await _apiService.searchBounties(_activeSearchQuery!);
       } else {
-        // Fetch all bounties
-        fetchedBounties = await _apiService.fetchBounties();
+        // Fetch all bounties, potentially with a funder wallet filter
+        fetchedBounties =
+            await _apiService.fetchBounties(funderWallet: _funderWalletFilter);
       }
 
       // Fetch paid bounties (only if not searching, or decide if search should also refresh this)
@@ -159,10 +161,8 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _clearSearch() async {
     setState(() {
       _activeSearchQuery = null;
-      _selectedPlatforms.clear(); // Optionally clear filters too
-      _minRewardFilter = null;
-      _maxRewardFilter = null;
     });
+    // We don't clear the filters here, that's a separate action.
     _startPolling(); // Restart polling
     await _loadData(isInitialLoad: true); // Reload to show all bounties
   }
@@ -195,15 +195,14 @@ class _HomeScreenState extends State<HomeScreen>
     context.go('/bounties/${bounty.id}', extra: bounty);
   }
 
-  // _submitClaim method is removed as it's now handled in BountyDetailScreen
-
   void _clearFilters() {
     setState(() {
       _selectedPlatforms.clear();
       _minRewardFilter = null;
       _maxRewardFilter = null;
+      _funderWalletFilter = null;
     });
-    _applyFilters();
+    _loadData(isInitialLoad: true);
   }
 
   void _showFilterSheet() {
@@ -227,6 +226,8 @@ class _HomeScreenState extends State<HomeScreen>
 
     Set<String> tempSelectedPlatforms = Set.from(_selectedPlatforms);
     String tempRewardRangeKey = currentRewardRangeKey;
+    TextEditingController funderWalletController =
+        TextEditingController(text: _funderWalletFilter);
 
     showModalBottomSheet(
       context: context,
@@ -323,6 +324,34 @@ class _HomeScreenState extends State<HomeScreen>
                       }).toList(),
                     ),
                     const SizedBox(height: 24),
+                    Text(
+                      'Filter by Funder Wallet (Optional)',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: funderWalletController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter wallet address...',
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        suffixIcon: funderWalletController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  setModalState(
+                                      () => funderWalletController.clear());
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setModalState(() {}); // Rebuild to show/hide clear icon
+                      },
+                    ),
+                    const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -331,9 +360,10 @@ class _HomeScreenState extends State<HomeScreen>
                             setModalState(() {
                               tempSelectedPlatforms.clear();
                               tempRewardRangeKey = rewardRanges.keys.first;
+                              funderWalletController.clear();
                             });
                           },
-                          child: const Text('Reset'),
+                          child: const Text('Reset All'),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
@@ -344,9 +374,12 @@ class _HomeScreenState extends State<HomeScreen>
                                   rewardRanges[tempRewardRangeKey]?.min;
                               _maxRewardFilter =
                                   rewardRanges[tempRewardRangeKey]?.max;
+                              _funderWalletFilter =
+                                  funderWalletController.text.trim();
                             });
-                            _applyFilters();
                             Navigator.pop(context);
+                            // Now, trigger a reload from the backend with the new filters.
+                            _loadData(isInitialLoad: true);
                           },
                           child: const Text('Apply Filters'),
                         ),
@@ -456,9 +489,11 @@ class _HomeScreenState extends State<HomeScreen>
             icon: Icon(
               _selectedPlatforms.isNotEmpty ||
                       _minRewardFilter != null ||
-                      _maxRewardFilter != null
-                  ? Icons.filter_list
-                  : Icons.filter_list_off_outlined,
+                      _maxRewardFilter != null ||
+                      (_funderWalletFilter != null &&
+                          _funderWalletFilter!.isNotEmpty)
+                  ? Icons.filter_list_off_outlined
+                  : Icons.filter_list,
               color: theme.colorScheme.primary,
             ),
             onPressed: _isLoading ? null : _showFilterSheet,
@@ -539,7 +574,8 @@ class _HomeScreenState extends State<HomeScreen>
         _paidBounties.isEmpty && !isSearching; // Hide paid if searching for now
     bool filtersAreActive = _selectedPlatforms.isNotEmpty ||
         _minRewardFilter != null ||
-        _maxRewardFilter != null;
+        _maxRewardFilter != null ||
+        (_funderWalletFilter != null && _funderWalletFilter!.isNotEmpty);
 
     if (noActiveBounties && (noPaidBounties || isSearching)) {
       return Center(
@@ -728,7 +764,8 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildNoActiveBountiesMessage(ThemeData theme) {
     bool filtersActive = _selectedPlatforms.isNotEmpty ||
         _minRewardFilter != null ||
-        _maxRewardFilter != null;
+        _maxRewardFilter != null ||
+        (_funderWalletFilter != null && _funderWalletFilter!.isNotEmpty);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),

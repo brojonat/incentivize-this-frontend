@@ -17,6 +17,8 @@ import 'loading_indicator.dart';
 import 'storage_service.dart'; // For wallet and auth token
 import 'auth_prompt_dialog.dart'; // For auth prompt
 import 'responsive_layout.dart';
+import 'notification_service.dart';
+import 'funding_qr_dialog.dart';
 
 class BountyDetailScreen extends StatefulWidget {
   final String bountyId;
@@ -188,32 +190,13 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Claim submitted successfully!'),
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+        NotificationService.showPageSuccess('Claim submitted successfully!');
         _refreshBountyData(); // Refresh data after successful claim
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error submitting claim: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+        NotificationService.showPageError(
+            'Failed to submit claim: ${e.toString()}');
       }
     }
   }
@@ -268,180 +251,248 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
       );
     }
 
-    if (_currentBounty == null) {
-      // This case should ideally be covered by the error or loading state,
-      // but as a fallback:
-      return Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: const Center(child: Text('Could not load bounty details.')),
-      );
-    }
+    // After loading, _currentBounty should not be null.
+    // Use a local variable for convenience and null safety.
+    final bounty = _currentBounty!;
 
-    // Bounty is loaded, build the UI
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentBounty!.title.isNotEmpty
-            ? _currentBounty!.title
-            : 'Bounty Details'),
-        elevation: 0,
-        backgroundColor: theme.colorScheme.surface,
-        leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: theme.colorScheme.primary,
-            ),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                // If it can't pop (e.g., deep link), go to home
-                context.go('/bounties');
-              }
-            }),
-      ),
       body: CenteredConstrainedView(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.05),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
+        child: CustomScrollView(
+          slivers: <Widget>[
+            SliverAppBar(
+              title: Text(bounty.title),
+              floating: true,
+              pinned: true,
+              snap: true,
+              actions: [
+                if (bounty.isClaimable)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showClaimDialog(context),
+                      icon: const Icon(Icons.add_task),
+                      label: Text(
+                        'Claim This Bounty',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                      ),
+                    ),
                   ),
-                ),
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
-                      children: [
-                        InfoChip(
-                          icon: Icons.monetization_on_outlined,
-                          text:
-                              '\$${_currentBounty!.bountyPerPost.toStringAsFixed(2)}',
-                          color: Colors.green.shade700,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.05),
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(32),
+                          bottomRight: Radius.circular(32),
                         ),
-                        InfoChip(
-                          icon: Icons.device_hub_outlined,
-                          text: _currentBounty!.platformKind,
-                          color: theme.colorScheme.tertiary,
-                        ),
-                        InfoChip(
-                          icon: Icons.article_outlined,
-                          text: _currentBounty!.contentKind,
-                          color: Colors.orange.shade700,
-                        ),
-                        InfoChip(
-                          icon: Icons.inventory_2_outlined,
-                          text: _currentBounty!.remainingPostsDisplay,
-                          color: theme.colorScheme.secondary,
-                        ),
-                        Builder(builder: (context) {
-                          final statusInfo =
-                              _currentBounty!.getStatusInfo(theme);
-                          return InfoChip(
-                            icon: statusInfo.icon,
-                            text: statusInfo.text,
-                            color: statusInfo.textColor,
-                            backgroundColor: statusInfo.backgroundColor,
-                            textColor: statusInfo.textColor,
-                          );
-                        }),
-                        if (_currentBounty!.tier != 8)
-                          InfoChip(
-                            icon: _currentBounty!.tierInfo(theme).icon,
-                            text: _currentBounty!.tierInfo(theme).name,
-                            color: _currentBounty!.tierInfo(theme).textColor,
-                            backgroundColor:
-                                _currentBounty!.tierInfo(theme).backgroundColor,
-                            textColor:
-                                _currentBounty!.tierInfo(theme).textColor,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: [
+                              InfoChip(
+                                icon: Icons.monetization_on_outlined,
+                                text:
+                                    '\$${_currentBounty!.bountyPerPost.toStringAsFixed(2)}',
+                                color: Colors.green.shade700,
+                              ),
+                              InfoChip(
+                                icon: Icons.device_hub_outlined,
+                                text: _currentBounty!.platformKind,
+                                color: theme.colorScheme.tertiary,
+                              ),
+                              InfoChip(
+                                icon: Icons.article_outlined,
+                                text: _currentBounty!.contentKind,
+                                color: Colors.orange.shade700,
+                              ),
+                              InfoChip(
+                                icon: Icons.inventory_2_outlined,
+                                text: _currentBounty!.remainingPostsDisplay,
+                                color: theme.colorScheme.secondary,
+                              ),
+                              Builder(builder: (context) {
+                                final statusInfo =
+                                    _currentBounty!.getStatusInfo(theme);
+                                return InfoChip(
+                                  icon: statusInfo.icon,
+                                  text: statusInfo.text,
+                                  color: statusInfo.textColor,
+                                  backgroundColor: statusInfo.backgroundColor,
+                                  textColor: statusInfo.textColor,
+                                );
+                              }),
+                              if (_currentBounty!.tier != 8)
+                                InfoChip(
+                                  icon: _currentBounty!.tierInfo(theme).icon,
+                                  text: _currentBounty!.tierInfo(theme).name,
+                                  color:
+                                      _currentBounty!.tierInfo(theme).textColor,
+                                  backgroundColor: _currentBounty!
+                                      .tierInfo(theme)
+                                      .backgroundColor,
+                                  textColor:
+                                      _currentBounty!.tierInfo(theme).textColor,
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Html(
-                        data: md.markdownToHtml(_currentBounty!.description),
-                        style: {
-                          "body": Style(
-                            fontSize: FontSize(
-                                theme.textTheme.bodyLarge?.fontSize ?? 16),
-                            lineHeight: const LineHeight(1.5),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Html(
+                              data: md
+                                  .markdownToHtml(_currentBounty!.description),
+                              style: {
+                                "body": Style(
+                                  fontSize: FontSize(
+                                      theme.textTheme.bodyLarge?.fontSize ??
+                                          16),
+                                  lineHeight: const LineHeight(1.5),
+                                ),
+                              },
+                            ),
                           ),
-                        },
+                          const SizedBox(height: 12),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    if (bounty.rawStatus == 'AwaitingFunding') ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            if (bounty.totalCharged == null ||
+                                bounty.paymentTimeoutExpiresAt == null) {
+                              NotificationService.showError(
+                                  'Funding information is not available for this bounty.');
+                              return;
+                            }
+
+                            final apiService =
+                                Provider.of<ApiService>(context, listen: false);
+                            try {
+                              final config = await apiService.fetchAppConfig();
+                              final walletAddress = config['escrow_wallet'];
+                              final usdcMintAddress =
+                                  config['usdc_mint_address'];
+
+                              if (walletAddress == null ||
+                                  usdcMintAddress == null) {
+                                throw Exception('Configuration is missing');
+                              }
+
+                              showDialog(
+                                context: context,
+                                builder: (context) => FundingQrDialog(
+                                  bountyId: bounty.id,
+                                  totalCharged: bounty.totalCharged!,
+                                  paymentTimeoutExpiresAt:
+                                      bounty.paymentTimeoutExpiresAt!,
+                                  walletAddress: walletAddress,
+                                  usdcMintAddress: usdcMintAddress,
+                                ),
+                              );
+                            } catch (e) {
+                              NotificationService.showError(
+                                  'Could not load funding information: $e');
+                            }
+                          },
+                          icon: const Icon(Icons.qr_code_scanner),
+                          label: const Text('Fund Bounty'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0, vertical: 16.0),
+                      child: _buildClaimButton(theme),
+                    ),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'Claim Activity',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.secondary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (_isLoadingPaidItems)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        child: LoadingIndicator(message: 'Loading claims...'),
+                      )
+                    else if (_paidItemsError != null)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Center(
+                          child: Text(
+                            _paidItemsError!,
+                            style: TextStyle(color: theme.colorScheme.error),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    else if (_paidItemsForWorkflow.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 20.0, horizontal: 16.0),
+                        child: Center(
+                          child: Text(
+                            'No claims have been paid for this bounty yet.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.7)),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _paidItemsForWorkflow.length,
+                        itemBuilder: (context, index) {
+                          final item = _paidItemsForWorkflow[index];
+                          return _buildPaidBountyTile(theme, item);
+                        },
+                      ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0, vertical: 16.0),
-                child: _buildClaimButton(theme),
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Claim Activity',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.secondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (_isLoadingPaidItems)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20.0),
-                  child: LoadingIndicator(message: 'Loading claims...'),
-                )
-              else if (_paidItemsError != null)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Center(
-                    child: Text(
-                      _paidItemsError!,
-                      style: TextStyle(color: theme.colorScheme.error),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              else if (_paidItemsForWorkflow.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 20.0, horizontal: 16.0),
-                  child: Center(
-                    child: Text(
-                      'No claims have been paid for this bounty yet.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7)),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _paidItemsForWorkflow.length,
-                  itemBuilder: (context, index) {
-                    final item = _paidItemsForWorkflow[index];
-                    return _buildPaidBountyTile(theme, item);
-                  },
-                ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -30,8 +30,9 @@ class ProviderSetup extends StatelessWidget {
           create: (_) => StorageService(),
         ),
         Provider<AppConfigService>(
-          create: (_) =>
-              AppConfigService(gumroadCheckoutUrl: gumroadCheckoutUrl),
+          create: (_) => AppConfigService(
+            gumroadCheckoutUrl: gumroadCheckoutUrl,
+          ),
         ),
       ],
       child: child,

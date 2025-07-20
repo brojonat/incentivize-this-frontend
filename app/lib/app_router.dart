@@ -11,10 +11,10 @@ import 'marketing_screen.dart'; // Import the new marketing screen
 // Potentially, ApiService might be needed here if we decide to pre-fetch
 // import 'api_service.dart';
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
-  navigatorKey: _rootNavigatorKey,
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/',
   routes: <RouteBase>[
     GoRoute(

@@ -40,6 +40,8 @@ class Bounty {
   final String contentKind;
   final String rawStatus;
   final int tier;
+  final double? totalCharged;
+  final DateTime? paymentTimeoutExpiresAt;
 
   Bounty({
     required this.id,
@@ -53,6 +55,8 @@ class Bounty {
     required this.contentKind,
     required this.rawStatus,
     required this.tier,
+    this.totalCharged,
+    this.paymentTimeoutExpiresAt,
   });
 
   String get displayStatus {
@@ -244,6 +248,14 @@ class Bounty {
         json['content_kind']?.toString() ?? 'Unknown';
     final String rawStatus = json['status']?.toString() ?? 'Unknown';
     final int tier = (json['tier'] is int) ? json['tier'] : 0;
+    final double? totalCharged = (json['total_charged'] is num)
+        ? (json['total_charged'] as num).toDouble()
+        : null;
+    final DateTime? paymentTimeoutExpiresAt =
+        json['payment_timeout_expires_at'] is String &&
+                (json['payment_timeout_expires_at'] as String).isNotEmpty
+            ? DateTime.tryParse(json['payment_timeout_expires_at'] as String)
+            : null;
 
     return Bounty(
       id: json['bounty_id'] ?? '',
@@ -257,6 +269,8 @@ class Bounty {
       contentKind: finalContentKind,
       rawStatus: rawStatus,
       tier: tier,
+      totalCharged: totalCharged,
+      paymentTimeoutExpiresAt: paymentTimeoutExpiresAt,
     );
   }
 
@@ -273,6 +287,8 @@ class Bounty {
       'platform_kind': platformKind,
       'content_kind': contentKind,
       'tier': tier,
+      'total_charged': totalCharged,
+      'payment_timeout_expires_at': paymentTimeoutExpiresAt?.toIso8601String(),
     };
   }
 }
