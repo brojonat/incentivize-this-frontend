@@ -84,43 +84,48 @@ class _FundingQrDialogState extends State<FundingQrDialog> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text('Fund Bounty'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_timeRemaining != null && _timeRemaining != Duration.zero)
-              Text(
-                'Expires in: ${_formatDuration(_timeRemaining!)}',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              )
-            else
-              const Text(
-                'Expired',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red),
-              ),
-            const SizedBox(height: 10),
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16.0),
-              child: QrImageView(
-                data: uri,
-                version: QrVersions.auto,
-                size: 200.0,
-              ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600.0),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_timeRemaining == null)
+                  const Text(
+                    'Expires in: -',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  )
+                else if (_timeRemaining != Duration.zero)
+                  Text(
+                    'Expires in: ${_formatDuration(_timeRemaining!)}',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  )
+                else
+                  const Text(
+                    'Expired',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red),
+                  ),
+                const SizedBox(height: 10),
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(16.0),
+                  child: QrImageView(
+                    data: uri,
+                    version: QrVersions.auto,
+                    size: 200.0,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text('Scan with your wallet to fund the bounty.')
+              ],
             ),
-            const SizedBox(height: 20),
-            const Text('Scan with your wallet to fund the bounty.'),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () => _launchURL(uri),
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('Open in Wallet'),
-            )
-          ],
+          ),
         ),
       ),
       actions: [

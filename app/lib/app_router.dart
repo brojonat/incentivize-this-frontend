@@ -25,9 +25,11 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/bounties', // Old home screen is now here
-      builder: (BuildContext context, GoRouterState state) {
-        return const HomeScreen();
-      },
+      pageBuilder: (context, state) => const NoTransitionPage(
+        child: HomeScreen(
+          key: ValueKey('HomeScreen'),
+        ),
+      ),
       routes: <RouteBase>[
         GoRoute(
           path: ':bountyId', // Note: no leading '/'

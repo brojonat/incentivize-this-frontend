@@ -6,7 +6,6 @@ import 'dart:async'; // Added for Timer
 
 import 'bounty.dart';
 import 'api_service.dart';
-import 'storage_service.dart';
 import 'bounty_card.dart';
 import 'loading_indicator.dart';
 // import 'bounty_detail_screen.dart'; // No longer directly navigating
@@ -23,11 +22,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
+  /* ------------------------------------------------------------------
+   * Static shared polling timer.
+   * Ensures ONLY ONE timer exists in the entire isolate regardless of how
+   * many HomeScreen instances are (re)created during hot-reload, navigation,
+   * etc. Each active HomeScreen registers itself in [_instances].
+   * ----------------------------------------------------------------*/
+  static Timer? _sharedTimer;
+  static final List<_HomeScreenState> _instances = [];
+
   late final ApiService _apiService;
-  late final StorageService _storageService;
   late final AnimationController _animationController;
-  late final Animation<double> _animation;
-  Timer? _pollingTimer; // Added for polling
+  // No per-instance timer anymore.
 
   List<Bounty> _bounties = [];
   List<Bounty> _filteredBounties = [];
@@ -45,38 +51,63 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
 
+    _instances.add(this);
+
     _apiService = Provider.of<ApiService>(context, listen: false);
-    _storageService = Provider.of<StorageService>(context, listen: false);
 
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
 
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    );
-
     _loadData(isInitialLoad: true);
-    _startPolling(); // Start polling
+    _ensureSharedTimerRunning();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _pollingTimer?.cancel(); // Cancel the timer
+
+    _instances.remove(this);
+
+    // If no more instances, stop the shared timer
+    if (_instances.isEmpty) {
+      _sharedTimer?.cancel();
+      _sharedTimer = null;
+    }
     super.dispose();
   }
 
-  void _startPolling() {
-    _pollingTimer?.cancel(); // Cancel any existing timer
-    _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (mounted && _activeSearchQuery == null) {
-        // Only poll if not actively searching
-        _loadData();
-      }
-    });
+  // Shared polling logic --------------------------------------------------
+  static void _ensureSharedTimerRunning() {
+    if (_sharedTimer != null) return;
+
+    void schedule() {
+      _sharedTimer = Timer(const Duration(seconds: 5), () async {
+        // Snapshot the instances to avoid modification during iteration
+        final listeners = List<_HomeScreenState>.from(_instances);
+        for (final state in listeners) {
+          if (state.mounted && state._activeSearchQuery == null) {
+            await state._loadData();
+          }
+        }
+
+        // Continue if there are still listeners
+        if (_instances.isNotEmpty) {
+          schedule();
+        } else {
+          _sharedTimer?.cancel();
+          _sharedTimer = null;
+        }
+      });
+    }
+
+    schedule();
+  }
+
+  static void _stopSharedTimer() {
+    _sharedTimer?.cancel();
+    _sharedTimer = null;
   }
 
   Future<void> _loadData({bool isInitialLoad = false}) async {
@@ -145,9 +176,10 @@ class _HomeScreenState extends State<HomeScreen>
       _activeSearchQuery = query.trim().isEmpty ? null : query.trim();
       // Stop polling when a search is active
       if (_activeSearchQuery != null) {
-        _pollingTimer?.cancel();
+        _stopSharedTimer(); // Cancel the shared timer
       } else {
-        _startPolling(); // Restart polling if search is cleared
+        _stopSharedTimer(); // Stop existing timer first
+        _ensureSharedTimerRunning(); // Restart polling if search is cleared
       }
     });
     // Close the search sheet, which should be done by the sheet itself before calling this
@@ -163,7 +195,8 @@ class _HomeScreenState extends State<HomeScreen>
       _activeSearchQuery = null;
     });
     // We don't clear the filters here, that's a separate action.
-    _startPolling(); // Restart polling
+    _stopSharedTimer(); // Stop existing timer first
+    _ensureSharedTimerRunning(); // Restart polling
     await _loadData(isInitialLoad: true); // Reload to show all bounties
   }
 
@@ -423,7 +456,6 @@ class _HomeScreenState extends State<HomeScreen>
       appBar: AppBar(
         titleSpacing: 10.0,
         title: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '🥕',

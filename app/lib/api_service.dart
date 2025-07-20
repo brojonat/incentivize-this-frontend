@@ -42,7 +42,7 @@ class ApiService {
 
       final response = await _client.get(
         uri,
-        headers: await _getHeaders(), // Await the headers
+        headers: await _getHeaders(),
       );
 
       if (response.statusCode == 200) {
