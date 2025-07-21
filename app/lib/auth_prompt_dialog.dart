@@ -129,7 +129,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
                       recognizer: TapGestureRecognizer()
                         ..onTap = _launchCheckoutLink,
                     ),
-                    const TextSpan(text: ' and I\'ll email one to you.'),
+                    const TextSpan(text: ' and we\'ll email one to you.'),
                   ],
                 ),
               ),

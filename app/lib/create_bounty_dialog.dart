@@ -139,8 +139,15 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
   Widget build(BuildContext context) {
     const double maxDialogWidth = 400.0;
     final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final double dialogWidth =
         (screenWidth > maxDialogWidth + 48) ? maxDialogWidth : screenWidth - 48;
+
+    // Calculate available height, accounting for keyboard and dialog chrome
+    final double availableHeight = screenHeight -
+        keyboardHeight -
+        200; // 200px for title, actions, padding
 
     return AlertDialog(
       title: Text(_bountyCreationResponse == null
@@ -148,6 +155,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
           : 'Fund Your Bounty'),
       content: SizedBox(
         width: dialogWidth,
+        height: availableHeight > 300
+            ? null
+            : availableHeight, // Constrain height if keyboard is up
         child:
             _bountyCreationResponse == null ? _buildFormView() : _buildQrView(),
       ),
@@ -179,6 +189,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,6 +197,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
             TextFormField(
               controller: _requirementsController,
               decoration: const InputDecoration(labelText: 'Requirements'),
+              maxLines: null,
+              minLines: 3,
+              keyboardType: TextInputType.multiline,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter requirements';
@@ -250,6 +264,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
               'Total Cost: \$${_totalCost.toStringAsFixed(2)}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
+            // Add bottom padding to ensure last field is accessible when keyboard is up
+            SizedBox(
+                height: MediaQuery.of(context).viewInsets.bottom > 0 ? 50 : 0),
           ],
         ),
       ),
