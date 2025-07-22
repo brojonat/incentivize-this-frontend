@@ -2,14 +2,13 @@ import 'dart:async';
 
 import 'package:app/api_service.dart';
 import 'package:app/auth_prompt_dialog.dart';
+import 'package:app/funding_qr_dialog.dart';
 import 'package:app/notification_service.dart';
 import 'package:app/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CreateBountyDialog extends StatefulWidget {
   const CreateBountyDialog({super.key});
@@ -30,31 +29,12 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
 
   Map<String, dynamic>? _bountyCreationResponse;
   Map<String, dynamic>? _config;
-  Timer? _countdownTimer;
-  Duration? _timeRemaining;
 
   @override
   void initState() {
     super.initState();
     _perPostController.addListener(_updateTotalCost);
     _numberOfBountiesController.addListener(_updateTotalCost);
-  }
-
-  void _startCountdown(DateTime expiresAt) {
-    _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      final now = DateTime.now();
-      if (now.isAfter(expiresAt)) {
-        setState(() {
-          _timeRemaining = Duration.zero;
-        });
-        timer.cancel();
-      } else {
-        setState(() {
-          _timeRemaining = expiresAt.difference(now);
-        });
-      }
-    });
   }
 
   void _updateTotalCost() {
@@ -70,7 +50,6 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
     _requirementsController.dispose();
     _perPostController.dispose();
     _numberOfBountiesController.dispose();
-    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -114,10 +93,6 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
         final configData = await apiService.fetchAppConfig();
 
         if (mounted) {
-          final expiresAt =
-              DateTime.parse(response['payment_timeout_expires_at']);
-          _startCountdown(expiresAt);
-
           setState(() {
             _config = configData;
             _bountyCreationResponse = response;
@@ -158,8 +133,17 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
         height: availableHeight > 300
             ? null
             : availableHeight, // Constrain height if keyboard is up
-        child:
-            _bountyCreationResponse == null ? _buildFormView() : _buildQrView(),
+        child: _bountyCreationResponse == null
+            ? _buildFormView()
+            : FundingQrDialog(
+                bountyId: _bountyCreationResponse!['bounty_id'],
+                totalCharged: (_bountyCreationResponse!['total_charged'] as num)
+                    .toDouble(),
+                paymentTimeoutExpiresAt: DateTime.parse(
+                    _bountyCreationResponse!['payment_timeout_expires_at']),
+                walletAddress: _config!['escrow_wallet'],
+                usdcMintAddress: _config!['usdc_mint_address'],
+              ),
       ),
       actions: [
         if (_bountyCreationResponse == null) ...[
@@ -176,7 +160,6 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
         ] else
           TextButton(
             onPressed: () {
-              _countdownTimer?.cancel();
               Navigator.of(context).pop();
             },
             child: const Text('Done'),
@@ -280,61 +263,5 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
         ),
       ),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = twoDigits(duration.inHours);
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$hours:$minutes:$seconds';
-  }
-
-  Widget _buildQrView() {
-    if (_config == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final walletAddress = _config!['escrow_wallet'];
-    final usdcMintAddress = _config!['usdc_mint_address'];
-    final bountyId = _bountyCreationResponse!['bounty_id'];
-    final totalCharged = _bountyCreationResponse!['total_charged'] as num;
-    final uri =
-        'solana:$walletAddress?amount=$totalCharged&spl-token=$usdcMintAddress&message=${Uri.encodeComponent('Bounty ID: $bountyId')}';
-
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_timeRemaining != null)
-            Text(
-              'Expires in: ${_formatDuration(_timeRemaining!)}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          const SizedBox(height: 10),
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(16.0),
-            child: QrImageView(
-              data: uri,
-              version: QrVersions.auto,
-              size: 200.0,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text('Scan with your wallet to fund the bounty.'),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri)) {
-      // Handle error
-      if (mounted) {
-        NotificationService.showError('Could not launch link');
-      }
-    }
   }
 }

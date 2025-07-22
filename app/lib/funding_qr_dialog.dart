@@ -78,8 +78,9 @@ class _FundingQrDialogState extends State<FundingQrDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final formattedAmount = widget.totalCharged.toStringAsFixed(2);
     final uri =
-        'solana:${widget.walletAddress}?amount=${widget.totalCharged}&spl-token=${widget.usdcMintAddress}&message=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
+        'solana:${widget.walletAddress}?amount=$formattedAmount&spl-token=${widget.usdcMintAddress}&message=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
