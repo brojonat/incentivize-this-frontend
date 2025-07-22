@@ -161,13 +161,14 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
                 ? const CircularProgressIndicator()
                 : const Text('Submit'),
           ),
-        ] else
+        ] else ...[
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
             },
             child: const Text('Done'),
-          )
+          ),
+        ]
       ],
     );
   }
@@ -175,7 +176,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
   Widget _buildFormView() {
     return Form(
       key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
+      autovalidateMode: AutovalidateMode.disabled,
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Column(
@@ -188,6 +189,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
               maxLines: null,
               minLines: 3,
               keyboardType: TextInputType.multiline,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter requirements';
@@ -204,6 +206,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
               ],
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a value';
@@ -224,6 +227,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
               decoration:
                   const InputDecoration(labelText: 'Number of Bounties'),
               keyboardType: TextInputType.number,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a value';
