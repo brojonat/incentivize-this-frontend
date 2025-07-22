@@ -6,27 +6,30 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'notification_service.dart';
 
-class FundingQrDialog extends StatefulWidget {
+// Reusable QR content widget that can be used standalone or embedded
+class FundingQrContent extends StatefulWidget {
   final String bountyId;
   final double totalCharged;
   final DateTime paymentTimeoutExpiresAt;
   final String walletAddress;
   final String usdcMintAddress;
+  final bool showActions; // Whether to show the "Open in Wallet" button
 
-  const FundingQrDialog({
+  const FundingQrContent({
     super.key,
     required this.bountyId,
     required this.totalCharged,
     required this.paymentTimeoutExpiresAt,
     required this.walletAddress,
     required this.usdcMintAddress,
+    this.showActions = true,
   });
 
   @override
-  State<FundingQrDialog> createState() => _FundingQrDialogState();
+  State<FundingQrContent> createState() => _FundingQrContentState();
 }
 
-class _FundingQrDialogState extends State<FundingQrDialog> {
+class _FundingQrContentState extends State<FundingQrContent> {
   Timer? _countdownTimer;
   Duration? _timeRemaining;
 
@@ -82,6 +85,75 @@ class _FundingQrDialogState extends State<FundingQrDialog> {
     final uri =
         'solana:${widget.walletAddress}?amount=$formattedAmount&spl-token=${widget.usdcMintAddress}&message=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
 
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_timeRemaining == null)
+          const Text(
+            'Expires in: -',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          )
+        else if (_timeRemaining != Duration.zero)
+          Text(
+            'Expires in: ${_formatDuration(_timeRemaining!)}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          )
+        else
+          const Text(
+            'Expired',
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
+          ),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          padding: const EdgeInsets.all(16.0),
+          child: QrImageView(
+            data: uri,
+            version: QrVersions.auto,
+            size: 200.0,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            errorCorrectionLevel: QrErrorCorrectLevel.M,
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text('Scan with your wallet to fund the bounty.'),
+        if (widget.showActions) ...[
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => _launchURL(uri),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open in Wallet'),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class FundingQrDialog extends StatelessWidget {
+  final String bountyId;
+  final double totalCharged;
+  final DateTime paymentTimeoutExpiresAt;
+  final String walletAddress;
+  final String usdcMintAddress;
+
+  const FundingQrDialog({
+    super.key,
+    required this.bountyId,
+    required this.totalCharged,
+    required this.paymentTimeoutExpiresAt,
+    required this.walletAddress,
+    required this.usdcMintAddress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text('Fund Bounty'),
@@ -90,41 +162,12 @@ class _FundingQrDialogState extends State<FundingQrDialog> {
         child: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_timeRemaining == null)
-                  const Text(
-                    'Expires in: -',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  )
-                else if (_timeRemaining != Duration.zero)
-                  Text(
-                    'Expires in: ${_formatDuration(_timeRemaining!)}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  )
-                else
-                  const Text(
-                    'Expired',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red),
-                  ),
-                const SizedBox(height: 10),
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(16.0),
-                  child: QrImageView(
-                    data: uri,
-                    version: QrVersions.auto,
-                    size: 200.0,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text('Scan with your wallet to fund the bounty.')
-              ],
+            child: FundingQrContent(
+              bountyId: bountyId,
+              totalCharged: totalCharged,
+              paymentTimeoutExpiresAt: paymentTimeoutExpiresAt,
+              walletAddress: walletAddress,
+              usdcMintAddress: usdcMintAddress,
             ),
           ),
         ),
@@ -133,11 +176,6 @@ class _FundingQrDialogState extends State<FundingQrDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
-        ),
-        ElevatedButton.icon(
-          onPressed: () => _launchURL(uri),
-          icon: const Icon(Icons.open_in_new),
-          label: const Text('Open in Wallet'),
         ),
       ],
     );
