@@ -133,6 +133,11 @@ class _FundingQrDialogState extends State<FundingQrDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
         ),
+        ElevatedButton.icon(
+          onPressed: () => _launchURL(uri),
+          icon: const Icon(Icons.open_in_new),
+          label: const Text('Open in Wallet'),
+        ),
       ],
     );
   }

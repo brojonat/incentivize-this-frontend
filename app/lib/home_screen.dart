@@ -481,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen>
                     color: theme.colorScheme.primary,
                     size: 22,
                   ),
-                  onPressed: () => context.go('/about'),
+                  onPressed: () => context.push('/about'),
                   tooltip: 'About',
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,

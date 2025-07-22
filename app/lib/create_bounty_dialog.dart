@@ -188,6 +188,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
   Widget _buildFormView() {
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Column(
@@ -211,13 +212,21 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
             TextFormField(
               controller: _perPostController,
               decoration: const InputDecoration(labelText: 'Bounty Per Post'),
-              keyboardType: TextInputType.number,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              ],
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a value';
                 }
                 if (double.tryParse(value) == null) {
                   return 'Please enter a valid number';
+                }
+                final amount = double.parse(value);
+                if (amount <= 0) {
+                  return 'Amount must be greater than 0';
                 }
                 return null;
               },

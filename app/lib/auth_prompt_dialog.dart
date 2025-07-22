@@ -88,68 +88,80 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AlertDialog(
+    final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Icon(Icons.lock_open, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          const Expanded(child: Text('Authentication Required')),
-        ],
-      ),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Please enter your access token to submit a claim.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Instructions for getting a token
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: screenHeight * 0.8, // Limit height to 80% of screen
+          maxWidth: 400,
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          resizeToAvoidBottomInset: true,
+          body: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Icon(Icons.lock_open, color: theme.colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Authentication Required',
+                          style: theme.textTheme.titleLarge,
+                        ),
+                      ),
+                    ],
                   ),
-                  children: [
-                    const TextSpan(text: 'Need a token? '),
-                    TextSpan(
-                      text: 'Get a token via Gumroad',
-                      style: TextStyle(
+                  const SizedBox(height: 16),
+
+                  // Simplified instructions
+                  Text(
+                    'Enter your access token to submit a claim.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Compact link to get token
+                  GestureDetector(
+                    onTap: _launchCheckoutLink,
+                    child: Text(
+                      'Need a token? Get one here →',
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         decoration: TextDecoration.underline,
                       ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = _launchCheckoutLink,
                     ),
-                    const TextSpan(text: ' and we\'ll email one to you.'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Wrap TextFormField in a SizedBox for fixed width
-              Center(
-                child: SizedBox(
-                  width: 300, // Set a fixed width for the input field
-                  child: TextFormField(
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Token input field
+                  TextFormField(
                     controller: _jwtController,
                     decoration: InputDecoration(
-                      labelText: 'JWT (token from email)',
+                      labelText: 'Access Token',
                       hintText: 'Paste your token here',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       prefixIcon: const Icon(Icons.vpn_key_outlined),
+                      isDense: true,
                     ),
                     obscureText: true,
                     maxLines: 1,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _submitJwt(),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Token cannot be empty';
@@ -160,39 +172,49 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
                       return null;
                     },
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_errorMessage != null) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: theme.colorScheme.error),
-                    textAlign: TextAlign.center,
+
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // Action buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _submitJwt,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Submit'),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _submitJwt,
-          child: _isLoading
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Save & Submit'),
-        ),
-      ],
     );
   }
 }

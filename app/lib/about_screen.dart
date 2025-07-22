@@ -16,7 +16,7 @@ class AboutScreen extends StatelessWidget {
             if (context.canPop()) {
               context.pop();
             } else {
-              context.go('/'); // Fallback to home if cannot pop
+              context.go('/bounties'); // Fallback to bounties if cannot pop
             }
           },
         ),
