@@ -458,20 +458,31 @@ class _HomeScreenState extends State<HomeScreen>
         titleSpacing: 10.0,
         title: Row(
           children: [
-            Text(
-              '🥕',
-              style: TextStyle(
-                fontSize: 24,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                  _activeSearchQuery != null && _activeSearchQuery!.isNotEmpty
-                      ? 'Search Results'
-                      : 'IncentivizeThis',
-                  overflow: TextOverflow.ellipsis),
+              child: GestureDetector(
+                onTap: () => context.go('/'),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    Text(
+                      '🥕',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                          _activeSearchQuery != null &&
+                                  _activeSearchQuery!.isNotEmpty
+                              ? 'Search Results'
+                              : 'IncentivizeThis',
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
+              ),
             ),
             if (_activeSearchQuery == null || _activeSearchQuery!.isEmpty) ...[
               Padding(
