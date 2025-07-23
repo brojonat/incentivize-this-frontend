@@ -147,30 +147,24 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
                   walletAddress: _config!['escrow_wallet'],
                   usdcMintAddress: _config!['usdc_mint_address'],
                   showActions: true,
+                  onDone: () => Navigator.of(context).pop(),
                 ),
               ),
       ),
-      actions: [
-        if (_bountyCreationResponse == null) ...[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _submitForm,
-            child: _isLoading
-                ? const CircularProgressIndicator()
-                : const Text('Submit'),
-          ),
-        ] else ...[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Done'),
-          ),
-        ]
-      ],
+      actions: _bountyCreationResponse == null
+          ? [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _submitForm,
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text('Submit'),
+              ),
+            ]
+          : [],
     );
   }
 

@@ -14,6 +14,7 @@ class FundingQrContent extends StatefulWidget {
   final String walletAddress;
   final String usdcMintAddress;
   final bool showActions; // Whether to show the "Open in Wallet" button
+  final VoidCallback? onDone;
 
   const FundingQrContent({
     super.key,
@@ -23,6 +24,7 @@ class FundingQrContent extends StatefulWidget {
     required this.walletAddress,
     required this.usdcMintAddress,
     this.showActions = true,
+    this.onDone,
   });
 
   @override
@@ -83,7 +85,7 @@ class _FundingQrContentState extends State<FundingQrContent> {
   Widget build(BuildContext context) {
     final formattedAmount = widget.totalCharged.toStringAsFixed(2);
     final uri =
-        'solana:${widget.walletAddress}?amount=$formattedAmount&spl-token=${widget.usdcMintAddress}&message=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
+        'solana:${widget.walletAddress}?amount=$formattedAmount&spl-token=${widget.usdcMintAddress}&memo=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -130,6 +132,13 @@ class _FundingQrContentState extends State<FundingQrContent> {
             label: const Text('Open in Wallet'),
           ),
         ],
+        if (widget.onDone != null) ...[
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: widget.onDone,
+            child: const Text('Done'),
+          )
+        ]
       ],
     );
   }
