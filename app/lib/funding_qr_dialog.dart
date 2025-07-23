@@ -165,6 +165,9 @@ class FundingQrDialog extends StatelessWidget {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text('Fund Bounty'),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600.0),
         child: SizedBox(

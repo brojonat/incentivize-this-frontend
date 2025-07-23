@@ -126,6 +126,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
         200; // 200px for title, actions, padding
 
     return AlertDialog(
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
       title: Text(_bountyCreationResponse == null
           ? 'Create Bounty'
           : 'Fund Your Bounty'),
