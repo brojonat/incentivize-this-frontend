@@ -7,6 +7,7 @@ import 'dart:async'; // Added for Timer
 import 'bounty.dart';
 import 'api_service.dart';
 import 'bounty_card.dart';
+import 'create_bounty_dialog.dart';
 import 'loading_indicator.dart';
 // import 'bounty_detail_screen.dart'; // No longer directly navigating
 import 'paid_bounty_item.dart'; // Import the new model
@@ -472,7 +473,33 @@ class _HomeScreenState extends State<HomeScreen>
                       : 'IncentivizeThis',
                   overflow: TextOverflow.ellipsis),
             ),
-            if (_activeSearchQuery == null || _activeSearchQuery!.isEmpty)
+            if (_activeSearchQuery == null || _activeSearchQuery!.isEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.primary,
+                    ),
+                    child: Icon(
+                      Icons.add,
+                      color: theme.colorScheme.onPrimary,
+                      size: 18,
+                    ),
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const CreateBountyDialog(),
+                    );
+                  },
+                  tooltip: 'Create Bounty',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: IconButton(
@@ -487,6 +514,7 @@ class _HomeScreenState extends State<HomeScreen>
                   padding: EdgeInsets.zero,
                 ),
               ),
+            ],
           ],
         ),
         elevation: 0,

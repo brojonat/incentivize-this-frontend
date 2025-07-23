@@ -122,7 +122,6 @@ class _FundingQrContentState extends State<FundingQrContent> {
           ),
         ),
         const SizedBox(height: 20),
-        const Text('Scan with your wallet to fund the bounty.'),
         if (widget.showActions) ...[
           const SizedBox(height: 16),
           ElevatedButton.icon(

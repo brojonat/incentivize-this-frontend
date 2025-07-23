@@ -29,6 +29,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
 
   Map<String, dynamic>? _bountyCreationResponse;
   Map<String, dynamic>? _config;
+  bool _showAllDurations = false;
 
   @override
   void initState() {
@@ -244,20 +245,19 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8.0,
-              children: ['1d', '3d', '7d', '30d', '60d', '90d', '180d']
-                  .map((duration) {
-                return ChoiceChip(
-                  label: Text(duration),
-                  selected: _selectedDuration == duration,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedDuration = duration;
-                      });
-                    }
+              runSpacing: 4.0,
+              children: [
+                ..._getDurationChips(),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _showAllDurations = !_showAllDurations;
+                    });
                   },
-                );
-              }).toList(),
+                  child:
+                      Text(_showAllDurations ? 'Show less' : 'More options...'),
+                )
+              ],
             ),
             const SizedBox(height: 24),
             Text(
@@ -271,5 +271,33 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
         ),
       ),
     );
+  }
+
+  List<Widget> _getDurationChips() {
+    const allDurations = ['1d', '3d', '7d', '30d', '60d', '90d', '180d'];
+    List<String> visibleDurations;
+
+    if (_showAllDurations) {
+      visibleDurations = allDurations;
+    } else {
+      visibleDurations = allDurations.take(3).toList();
+      if (!visibleDurations.contains(_selectedDuration)) {
+        visibleDurations.add(_selectedDuration);
+      }
+    }
+
+    return visibleDurations.map((duration) {
+      return ChoiceChip(
+        label: Text(duration),
+        selected: _selectedDuration == duration,
+        onSelected: (selected) {
+          if (selected) {
+            setState(() {
+              _selectedDuration = duration;
+            });
+          }
+        },
+      );
+    }).toList();
   }
 }
