@@ -264,27 +264,6 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
               floating: true,
               pinned: true,
               snap: true,
-              actions: [
-                if (bounty.isClaimable)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showClaimDialog(context),
-                      icon: const Icon(Icons.add_task),
-                      label: Text(
-                        'Claim This Bounty',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-              ],
             ),
             SliverToBoxAdapter(
               child: SingleChildScrollView(

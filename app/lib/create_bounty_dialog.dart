@@ -187,7 +187,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
                 labelText: 'Requirements',
                 counterText: '', // Hide the character counter
               ),
-              maxLength: 2000,
+              maxLength: 4000,
               maxLines: null,
               minLines: 3,
               keyboardType: TextInputType.multiline,
