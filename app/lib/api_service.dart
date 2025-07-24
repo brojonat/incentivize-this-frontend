@@ -15,6 +15,18 @@ class ApiService {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
+  // Helper to extract a user-friendly error message from a response.
+  String _extractErrorMessage(http.Response response) {
+    try {
+      final body = json.decode(response.body);
+      // Prefer the 'error' field, but fallback to the full body if it's not there.
+      return body['error']?.toString() ?? response.body;
+    } catch (e) {
+      // If the body isn't valid JSON, return the raw body.
+      return response.body;
+    }
+  }
+
   // Helper method to get headers - now async
   Future<Map<String, String>> _getHeaders() async {
     final headers = {'Content-Type': 'application/json'};
@@ -51,7 +63,8 @@ class ApiService {
           return Bounty.fromJson(json);
         }).toList();
       } else {
-        throw Exception('Failed to load bounties: ${response.statusCode}');
+        throw Exception(
+            'Failed to load bounties: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Error fetching bounties: $e');
@@ -71,7 +84,8 @@ class ApiService {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => PaidBountyItem.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load paid bounties: ${response.statusCode}');
+        throw Exception(
+            'Failed to load paid bounties: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Error fetching paid bounties: $e');
@@ -96,7 +110,7 @@ class ApiService {
         return data.map((json) => PaidBountyItem.fromJson(json)).toList();
       } else {
         throw Exception(
-            'Failed to load paid bounties for workflow $bountyId: ${response.statusCode}');
+            'Failed to load paid bounties for workflow $bountyId: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception(
@@ -117,7 +131,7 @@ class ApiService {
         return Bounty.fromJson(data);
       } else {
         throw Exception(
-            'Failed to load bounty $bountyId: ${response.statusCode}');
+            'Failed to load bounty $bountyId: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Error fetching bounty $bountyId: $e');
@@ -146,7 +160,7 @@ class ApiService {
         return data.map((json) => Bounty.fromJson(json)).toList();
       } else {
         throw Exception(
-            'Failed to search bounties: ${response.statusCode} ${response.body}');
+            'Failed to search bounties: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Error searching bounties: $e');
@@ -175,9 +189,8 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        final body = json.decode(response.body);
         throw Exception(
-            'Failed to submit claim: ${body['error'] ?? response.body}');
+            'Failed to submit claim: ${_extractErrorMessage(response)}');
       }
 
       return json.decode(response.body);
@@ -205,7 +218,7 @@ class ApiService {
 
       if (response.statusCode != 201) {
         throw Exception(
-            'Failed to submit contact form: ${response.statusCode} ${response.body}');
+            'Failed to submit contact form: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Error submitting contact form: $e');
@@ -239,7 +252,7 @@ class ApiService {
         return json.decode(response.body);
       } else {
         throw Exception(
-            'Failed to create bounty: ${response.statusCode} ${response.body}');
+            'Failed to create bounty: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Error creating bounty: $e');
@@ -254,7 +267,7 @@ class ApiService {
         return json.decode(response.body);
       } else {
         throw Exception(
-            'Failed to load app config: ${response.statusCode} ${response.body}');
+            'Failed to load app config: ${_extractErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Error fetching app config: $e');

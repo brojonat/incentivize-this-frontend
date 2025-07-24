@@ -183,7 +183,11 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
           children: [
             TextFormField(
               controller: _requirementsController,
-              decoration: const InputDecoration(labelText: 'Requirements'),
+              decoration: const InputDecoration(
+                labelText: 'Requirements',
+                counterText: '', // Hide the character counter
+              ),
+              maxLength: 2000,
               maxLines: null,
               minLines: 3,
               keyboardType: TextInputType.multiline,
@@ -198,7 +202,11 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _perPostController,
-              decoration: const InputDecoration(labelText: 'Bounty Per Post'),
+              decoration: const InputDecoration(
+                labelText: 'Bounty Per Post',
+                counterText: '', // Hide the character counter
+              ),
+              maxLength: 10, // Allows for amounts up to 9,999,999.99
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
@@ -222,8 +230,11 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _numberOfBountiesController,
-              decoration:
-                  const InputDecoration(labelText: 'Number of Bounties'),
+              decoration: const InputDecoration(
+                labelText: 'Number of Bounties',
+                counterText: '', // Hide the character counter
+              ),
+              maxLength: 6, // Allows for up to 999,999 bounties
               keyboardType: TextInputType.number,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {
@@ -232,6 +243,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
                 }
                 if (int.tryParse(value) == null) {
                   return 'Please enter a whole number';
+                }
+                if (int.tryParse(value)! <= 0) {
+                  return 'Number of bounties must be greater than 0';
                 }
                 return null;
               },
