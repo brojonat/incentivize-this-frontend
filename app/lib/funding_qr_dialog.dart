@@ -121,8 +121,7 @@ class _FundingQrContentState extends State<FundingQrContent> {
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
             errorCorrectionLevel: QrErrorCorrectLevel.M,
-            embeddedImage:
-                const AssetImage('assets/images/marketing-carrot.jpg'),
+            embeddedImage: const AssetImage('assets/images/favicon.png'),
             embeddedImageStyle: const QrEmbeddedImageStyle(
               size: Size(40, 40),
             ),
