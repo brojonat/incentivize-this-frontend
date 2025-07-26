@@ -34,11 +34,37 @@ class FundingQrContent extends StatefulWidget {
 class _FundingQrContentState extends State<FundingQrContent> {
   Timer? _countdownTimer;
   Duration? _timeRemaining;
+  late final Widget qrCodeWidget;
 
   @override
   void initState() {
     super.initState();
     _startCountdown(widget.paymentTimeoutExpiresAt);
+
+    final formattedAmount = widget.totalCharged.toStringAsFixed(2);
+    final uri =
+        'solana:${widget.walletAddress}?amount=$formattedAmount&spl-token=${widget.usdcMintAddress}&memo=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
+
+    qrCodeWidget = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      padding: const EdgeInsets.all(16.0),
+      child: QrImageView(
+        data: uri,
+        version: QrVersions.auto,
+        size: 200.0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        errorCorrectionLevel: QrErrorCorrectLevel.M,
+        embeddedImage: const AssetImage('assets/images/qr-center.png'),
+        embeddedImageStyle: const QrEmbeddedImageStyle(
+          size: Size(40, 40),
+        ),
+      ),
+    );
   }
 
   @override
@@ -83,10 +109,6 @@ class _FundingQrContentState extends State<FundingQrContent> {
 
   @override
   Widget build(BuildContext context) {
-    final formattedAmount = widget.totalCharged.toStringAsFixed(2);
-    final uri =
-        'solana:${widget.walletAddress}?amount=$formattedAmount&spl-token=${widget.usdcMintAddress}&memo=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -107,31 +129,17 @@ class _FundingQrContentState extends State<FundingQrContent> {
                 fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
           ),
         const SizedBox(height: 10),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          padding: const EdgeInsets.all(16.0),
-          child: QrImageView(
-            data: uri,
-            version: QrVersions.auto,
-            size: 200.0,
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            errorCorrectionLevel: QrErrorCorrectLevel.M,
-            embeddedImage: const AssetImage('assets/images/favicon.png'),
-            embeddedImageStyle: const QrEmbeddedImageStyle(
-              size: Size(40, 40),
-            ),
-          ),
-        ),
+        qrCodeWidget,
         const SizedBox(height: 20),
         if (widget.showActions) ...[
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () => _launchURL(uri),
+            onPressed: () {
+              final formattedAmount = widget.totalCharged.toStringAsFixed(2);
+              final uri =
+                  'solana:${widget.walletAddress}?amount=$formattedAmount&spl-token=${widget.usdcMintAddress}&memo=${Uri.encodeComponent('Bounty ID: ${widget.bountyId}')}';
+              _launchURL(uri);
+            },
             icon: const Icon(Icons.open_in_new),
             label: const Text('Open in Wallet'),
           ),
