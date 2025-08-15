@@ -92,7 +92,7 @@ class BountyCard extends StatelessWidget {
                               : Colors.grey.shade600,
                         ),
                         InfoChip(
-                          icon: Icons.device_hub_outlined,
+                          icon: bounty.platformIcon,
                           text: bounty.platformKind,
                           color: theme.colorScheme.tertiary,
                         ),

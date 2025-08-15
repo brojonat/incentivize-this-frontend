@@ -155,6 +155,18 @@ class ContentIdParser {
           // it will fall through to the default behavior (return trimmedInput).
           break;
 
+        case 'STEAM': // New case for Steam (OpenDota)
+          if (uri.host.contains('opendota.com')) {
+            final segments = uri.pathSegments;
+            if (segments.length >= 2 && segments[0] == 'matches') {
+              final matchId = segments[1];
+              if (matchId.isNotEmpty && RegExp(r'^\d+$').hasMatch(matchId)) {
+                return matchId;
+              }
+            }
+          }
+          break;
+
         default:
           // Unknown platform, assume input is the ID
           break;

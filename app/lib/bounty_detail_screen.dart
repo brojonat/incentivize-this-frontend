@@ -294,7 +294,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
                                 color: Colors.green.shade700,
                               ),
                               InfoChip(
-                                icon: Icons.device_hub_outlined,
+                                icon: _currentBounty!.platformIcon,
                                 text: _currentBounty!.platformKind,
                                 color: theme.colorScheme.tertiary,
                               ),
@@ -491,9 +491,9 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
       return ElevatedButton(
         onPressed: () => _showClaimDialog(context),
         style: buttonStyle.copyWith(
-          backgroundColor: MaterialStateProperty.all(theme.colorScheme.primary),
+          backgroundColor: WidgetStateProperty.all(theme.colorScheme.primary),
           foregroundColor:
-              MaterialStateProperty.all(theme.colorScheme.onPrimary),
+              WidgetStateProperty.all(theme.colorScheme.onPrimary),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -514,7 +514,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
       return ElevatedButton(
         onPressed: null,
         style: buttonStyle.copyWith(
-          backgroundColor: MaterialStateProperty.all(
+          backgroundColor: WidgetStateProperty.all(
               theme.colorScheme.outline.withOpacity(0.2)),
         ),
         child: Row(

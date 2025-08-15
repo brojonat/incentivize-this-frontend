@@ -345,7 +345,7 @@ class _MarketingScreenState extends State<MarketingScreen>
               SliverToBoxAdapter(
                 child: Container(
                   height: 500,
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
                   child: Row(
@@ -504,7 +504,7 @@ class _MarketingScreenState extends State<MarketingScreen>
               SliverToBoxAdapter(
                 child: Container(
                   height: 500,
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
                   child: Row(
@@ -608,7 +608,7 @@ class _MarketingScreenState extends State<MarketingScreen>
               SliverToBoxAdapter(
                 child: Container(
                   height: 500,
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   child: Center(
                     child: Opacity(
                       opacity: _section6AnimationValue,

@@ -5,6 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'bounty.dart';
 import 'paid_bounty_item.dart';
 
+class ApiUnauthorizedException implements Exception {
+  final String message;
+  ApiUnauthorizedException([this.message = 'Unauthorized']);
+  @override
+  String toString() => 'ApiUnauthorizedException: $message';
+}
+
 class ApiService {
   // Base URL for the API - replace with your actual backend URL
   final String baseUrl;
@@ -250,6 +257,10 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return json.decode(response.body);
+      } else if (response.statusCode == 401) {
+        throw ApiUnauthorizedException(_extractErrorMessage(response).isNotEmpty
+            ? _extractErrorMessage(response)
+            : 'Unauthorized');
       } else {
         throw Exception(
             'Failed to create bounty: ${_extractErrorMessage(response)}');
@@ -271,6 +282,37 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching app config: $e');
+    }
+  }
+
+  // Harden bounty requirements via backend LLM endpoint
+  Future<String> hardenRequirements(String requirements) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/bounties/harden'),
+        headers: await _getHeaders(),
+        body: json.encode({
+          'requirements': requirements,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final hardened = data['requirements']?.toString();
+        if (hardened == null || hardened.trim().isEmpty) {
+          throw Exception('Server returned empty hardened requirements');
+        }
+        return hardened;
+      } else if (response.statusCode == 401) {
+        throw ApiUnauthorizedException(_extractErrorMessage(response).isNotEmpty
+            ? _extractErrorMessage(response)
+            : 'Unauthorized');
+      } else {
+        throw Exception(
+            'Failed to harden requirements: ${_extractErrorMessage(response)}');
+      }
+    } catch (e) {
+      throw Exception('Error hardening requirements: $e');
     }
   }
 }

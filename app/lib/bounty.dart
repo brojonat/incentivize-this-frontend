@@ -105,6 +105,29 @@ class Bounty {
     return rawStatus == 'Listening';
   }
 
+  IconData get platformIcon {
+    switch (platformKind.toUpperCase()) {
+      case 'REDDIT':
+        return Icons.reddit;
+      case 'YOUTUBE':
+        return Icons.play_arrow;
+      case 'TWITCH':
+        return Icons.tv;
+      case 'TRIPADVISOR':
+        return Icons.travel_explore;
+      case 'HACKERNEWS':
+        return Icons.code;
+      case 'INSTAGRAM':
+        return Icons.camera_alt;
+      case 'BLUESKY':
+        return Icons.cloud;
+      case 'STEAM':
+        return Icons.sports_esports;
+      default:
+        return Icons.device_hub;
+    }
+  }
+
   int? get daysRemaining {
     if (deadline == null) {
       return null;

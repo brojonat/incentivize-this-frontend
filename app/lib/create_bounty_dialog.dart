@@ -7,7 +7,6 @@ import 'package:app/notification_service.dart';
 import 'package:app/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class CreateBountyDialog extends StatefulWidget {
@@ -17,13 +16,15 @@ class CreateBountyDialog extends StatefulWidget {
   State<CreateBountyDialog> createState() => _CreateBountyDialogState();
 }
 
-class _CreateBountyDialogState extends State<CreateBountyDialog> {
+class _CreateBountyDialogState extends State<CreateBountyDialog>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _requirementsController = TextEditingController();
   final _perPostController = TextEditingController();
   final _numberOfBountiesController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isHardening = false;
   String _selectedDuration = '30d';
   double _totalCost = 0.0;
 
@@ -31,11 +32,26 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
   Map<String, dynamic>? _config;
   bool _showAllDurations = false;
 
+  late AnimationController _glowController;
+  late Animation<double> _glowAnimation;
+
   @override
   void initState() {
     super.initState();
     _perPostController.addListener(_updateTotalCost);
     _numberOfBountiesController.addListener(_updateTotalCost);
+
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _glowController,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
   void _updateTotalCost() {
@@ -51,6 +67,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
     _requirementsController.dispose();
     _perPostController.dispose();
     _numberOfBountiesController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -107,6 +124,53 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
             _isLoading = false;
           });
         }
+      }
+    }
+  }
+
+  Future<void> _hardenRequirements() async {
+    final current = _requirementsController.text;
+    if (current.trim().isEmpty) {
+      NotificationService.showError('Enter requirements to refine.');
+      return;
+    }
+
+    setState(() {
+      _isHardening = true;
+    });
+
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final hardened = await apiService.hardenRequirements(current);
+      if (!mounted) return;
+      setState(() {
+        _requirementsController.text = hardened;
+        // Move cursor to end
+        _requirementsController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _requirementsController.text.length),
+        );
+      });
+      NotificationService.showSuccess('Requirements refined.');
+    } catch (e) {
+      if (e.toString().contains('ApiUnauthorizedException')) {
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (context) => AuthPromptDialog(
+            onTokenSaved: () {
+              // Retry after token is saved
+              _hardenRequirements();
+            },
+          ),
+        );
+      } else {
+        NotificationService.showError('Failed to refine: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isHardening = false;
+        });
       }
     }
   }
@@ -198,6 +262,100 @@ class _CreateBountyDialogState extends State<CreateBountyDialog> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation: _glowAnimation,
+                      builder: (context, child) {
+                        final Color color1, color2;
+                        if (_isHardening) {
+                          color1 = Color.lerp(Colors.grey.shade600,
+                              Colors.grey.shade800, _glowAnimation.value)!;
+                          color2 = Color.lerp(Colors.grey.shade800,
+                              Colors.grey.shade600, _glowAnimation.value)!;
+                        } else {
+                          color1 = Color.lerp(
+                              const Color.fromARGB(255, 133, 242, 254),
+                              const Color.fromARGB(255, 126, 26, 209),
+                              _glowAnimation.value)!;
+                          color2 = Color.lerp(
+                              const Color.fromARGB(255, 126, 26, 209),
+                              const Color.fromARGB(255, 133, 242, 254),
+                              _glowAnimation.value)!;
+                        }
+
+                        return Container(
+                          width: 90, // Give a fixed width to the container
+                          height: 24, // Give a fixed height
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            gradient: LinearGradient(
+                              colors: [color1, color2],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _isHardening ? null : _hardenRequirements,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize:
+                            const Size(120, 48), // Match the container size
+                        backgroundColor: Colors.transparent,
+                        disabledBackgroundColor: Colors
+                            .transparent, // Keep transparent when disabled
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: _isHardening
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color.fromARGB(255, 238, 255, 108),
+                                  Color.fromARGB(255, 255, 240, 78)
+                                ],
+                              ).createShader(bounds),
+                              child: const Text(
+                                '✨',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ),
+                      label: Text(
+                        _isHardening ? 'Refining…' : 'Refine',
+                        style: TextStyle(
+                          color: _isHardening
+                              ? Colors.white
+                              : const Color.fromARGB(255, 255, 213, 62),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             TextFormField(
