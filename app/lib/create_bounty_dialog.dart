@@ -281,12 +281,12 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                               Colors.grey.shade600, _glowAnimation.value)!;
                         } else {
                           color1 = Color.lerp(
-                              const Color.fromARGB(255, 133, 242, 254),
+                              const Color.fromARGB(255, 0, 31, 124),
                               const Color.fromARGB(255, 126, 26, 209),
                               _glowAnimation.value)!;
                           color2 = Color.lerp(
                               const Color.fromARGB(255, 126, 26, 209),
-                              const Color.fromARGB(255, 133, 242, 254),
+                              const Color.fromARGB(255, 0, 31, 124),
                               _glowAnimation.value)!;
                         }
 
@@ -348,7 +348,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                         style: TextStyle(
                           color: _isHardening
                               ? Colors.white
-                              : const Color.fromARGB(255, 255, 213, 62),
+                              : const Color.fromARGB(255, 243, 242, 241),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
