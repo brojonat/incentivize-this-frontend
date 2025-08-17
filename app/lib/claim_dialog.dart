@@ -265,16 +265,6 @@ class _ClaimDialogState extends State<ClaimDialog> {
                     keyboardType: TextInputType.text,
                     textInputAction: TextInputAction.next,
                   ),
-                  if (_parsedContentId != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                      child: Text(
-                        'Using ID: $_parsedContentId',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.secondary,
-                        ),
-                      ),
-                    ),
                   const SizedBox(height: 16),
                   Text(
                     'Wallet Address',
