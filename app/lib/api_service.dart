@@ -195,6 +195,10 @@ class ApiService {
         }),
       );
 
+      if (response.statusCode == 401) {
+        throw ApiUnauthorizedException(_extractErrorMessage(response));
+      }
+
       if (response.statusCode != 200) {
         throw Exception(
             'Failed to submit claim: ${_extractErrorMessage(response)}');

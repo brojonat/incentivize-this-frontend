@@ -1,17 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'dart:async';
-import 'package:go_router/go_router.dart'; // For navigation
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/gestures.dart';
 
+import 'api_service.dart';
 import 'bounty.dart';
 import 'claim_dialog.dart';
 import 'info_chip.dart';
-import 'api_service.dart';
 import 'paid_bounty_item.dart';
 import 'loading_indicator.dart';
 import 'storage_service.dart'; // For wallet and auth token
@@ -150,24 +146,6 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
   ) async {
     if (_currentBounty == null) return;
 
-    final token = await _storageService.getAuthToken();
-
-    if (token == null || token.isEmpty) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => AuthPromptDialog(
-            onTokenSaved: () {
-              print('Token saved, retrying submission...');
-              _submitClaim(contentId, walletAddress);
-            },
-          ),
-        );
-      }
-      return;
-    }
-
     try {
       if (mounted) {
         // Pop the claim dialog before showing snackbar
@@ -181,7 +159,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
         _walletAddress = walletAddress; // Update local state
       });
 
-      final result = await _apiService.submitClaim(
+      await _apiService.submitClaim(
         bountyId: _currentBounty!.id,
         contentId: contentId,
         walletAddress: walletAddress,
@@ -192,6 +170,18 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
       if (mounted) {
         NotificationService.showPageSuccess('Claim submitted successfully!');
         _refreshBountyData(); // Refresh data after successful claim
+      }
+    } on ApiUnauthorizedException {
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AuthPromptDialog(
+            onTokenSaved: () {
+              _submitClaim(contentId, walletAddress);
+            },
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -492,8 +482,7 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
         onPressed: () => _showClaimDialog(context),
         style: buttonStyle.copyWith(
           backgroundColor: WidgetStateProperty.all(theme.colorScheme.primary),
-          foregroundColor:
-              WidgetStateProperty.all(theme.colorScheme.onPrimary),
+          foregroundColor: WidgetStateProperty.all(theme.colorScheme.onPrimary),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
