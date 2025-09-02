@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -68,21 +69,45 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Center(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.home_rounded),
-                label: const Text('Explore Bounties'),
-                onPressed: () => context.go('/bounties'),
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: theme.textTheme.titleMedium,
-                ),
+              child: Column(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.home_rounded),
+                    label: const Text('Explore Bounties'),
+                    onPressed: () => context.go('/bounties'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      textStyle: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.forum_rounded),
+                    label: const Text('Have questions? Join our Discord!'),
+                    onPressed: () =>
+                        _launchUrl('https://discord.gg/Sut96XYkKg'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      textStyle: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      // Consider showing an error message to the user
+      debugPrint('Could not launch $url');
+    }
   }
 
   Widget _buildSectionTitle(ThemeData theme, String title) {
