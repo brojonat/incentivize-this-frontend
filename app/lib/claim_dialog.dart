@@ -60,7 +60,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
 
   void _scrollToFocusedField() {
     // A small delay to allow keyboard to appear
-    Future.delayed(const Duration(milliseconds: 300), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (_contentIdFocusNode.hasFocus || _walletAddressFocusNode.hasFocus) {
         _scrollController.animateTo(
