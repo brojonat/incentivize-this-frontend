@@ -24,6 +24,9 @@ class ClaimDialog extends StatefulWidget {
 class _ClaimDialogState extends State<ClaimDialog> {
   late final TextEditingController _contentIdController;
   late final TextEditingController _walletAddressController;
+  final _scrollController = ScrollController();
+  final _contentIdFocusNode = FocusNode();
+  final _walletAddressFocusNode = FocusNode();
   bool _isSubmitting = false;
   String? _contentIdError;
   String? _walletAddressError;
@@ -38,6 +41,8 @@ class _ClaimDialogState extends State<ClaimDialog> {
       text: widget.initialWalletAddress ?? '',
     );
     _contentIdController.addListener(_parseContentIdInput);
+    _contentIdFocusNode.addListener(_scrollToFocusedField);
+    _walletAddressFocusNode.addListener(_scrollToFocusedField);
   }
 
   @override
@@ -45,7 +50,26 @@ class _ClaimDialogState extends State<ClaimDialog> {
     _contentIdController.removeListener(_parseContentIdInput);
     _contentIdController.dispose();
     _walletAddressController.dispose();
+    _scrollController.dispose();
+    _contentIdFocusNode.removeListener(_scrollToFocusedField);
+    _contentIdFocusNode.dispose();
+    _walletAddressFocusNode.removeListener(_scrollToFocusedField);
+    _walletAddressFocusNode.dispose();
     super.dispose();
+  }
+
+  void _scrollToFocusedField() {
+    // A small delay to allow keyboard to appear
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      if (_contentIdFocusNode.hasFocus || _walletAddressFocusNode.hasFocus) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   void _validate() {
@@ -180,6 +204,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
           backgroundColor: Colors.transparent,
           resizeToAvoidBottomInset: true,
           body: SingleChildScrollView(
+            controller: _scrollController,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -224,6 +249,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _contentIdController,
+                    focusNode: _contentIdFocusNode,
                     decoration: InputDecoration(
                       labelText: 'Content ID or URL',
                       hintText: 'Enter the content ID or URL',
@@ -275,6 +301,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _walletAddressController,
+                    focusNode: _walletAddressFocusNode,
                     decoration: InputDecoration(
                       hintText: 'Enter your wallet address',
                       errorText: _walletAddressError,
