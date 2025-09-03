@@ -242,15 +242,11 @@ class ApiService {
     required double bountyPerPost,
     required double totalBounty,
     required String timeoutDuration,
-    required String token,
   }) async {
     try {
       final response = await _client.post(
         Uri.parse('$baseUrl/bounties'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        headers: await _getHeaders(),
         body: json.encode({
           'requirements': requirements,
           'bounty_per_post': bountyPerPost,

@@ -77,27 +77,6 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
         _isLoading = true;
       });
 
-      final storageService =
-          Provider.of<StorageService>(context, listen: false);
-      String? token = await storageService.getAuthToken();
-
-      if (token == null || token.isEmpty) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AuthPromptDialog(
-              onTokenSaved: () {
-                _submitForm();
-              },
-            ),
-          );
-        }
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
       try {
         final apiService = Provider.of<ApiService>(context, listen: false);
         final response = await apiService.createBounty(
@@ -105,7 +84,6 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           bountyPerPost: double.parse(_perPostController.text),
           totalBounty: _totalCost,
           timeoutDuration: _selectedDuration,
-          token: token,
         );
 
         final configData = await apiService.fetchAppConfig();
@@ -118,8 +96,23 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           });
         }
       } catch (e) {
+        if (e is ApiUnauthorizedException) {
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AuthPromptDialog(
+                onTokenSaved: () {
+                  _submitForm(); // Retry the submission
+                },
+              ),
+            );
+          }
+        } else {
+          if (mounted) {
+            NotificationService.showError('Failed to create bounty: $e');
+          }
+        }
         if (mounted) {
-          NotificationService.showError('Failed to create bounty: $e');
           setState(() {
             _isLoading = false;
           });
