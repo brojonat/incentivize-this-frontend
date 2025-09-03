@@ -245,10 +245,13 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 counterText: '', // Hide the character counter
               ),
               maxLength: 4000,
-              maxLines: null,
-              minLines: 3,
+              maxLines: 15,
+              minLines: 5,
               keyboardType: TextInputType.multiline,
               autovalidateMode: AutovalidateMode.onUserInteraction,
+              scrollPadding: const EdgeInsets.all(40.0),
+              cursorWidth: 3.0,
+              cursorRadius: const Radius.circular(2.0),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter requirements';
