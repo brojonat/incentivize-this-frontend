@@ -59,14 +59,25 @@ class _ClaimDialogState extends State<ClaimDialog> {
   }
 
   void _scrollToFocusedField() {
-    // A small delay to allow keyboard to appear
+    // This is a more robust way to scroll to the focused field.
+    // It waits for the frame to be rendered *after* the focus change,
+    // and then uses Scrollable.ensureVisible to make sure the field is in view.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (_contentIdFocusNode.hasFocus || _walletAddressFocusNode.hasFocus) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+
+      FocusNode? focusedNode;
+      if (_contentIdFocusNode.hasFocus) {
+        focusedNode = _contentIdFocusNode;
+      } else if (_walletAddressFocusNode.hasFocus) {
+        focusedNode = _walletAddressFocusNode;
+      }
+
+      if (focusedNode != null && focusedNode.context != null) {
+        Scrollable.ensureVisible(
+          focusedNode.context!,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
+          alignment: 0.1, // Aligns the field near the top of the visible area
         );
       }
     });
