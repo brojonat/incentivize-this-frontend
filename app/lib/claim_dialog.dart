@@ -249,8 +249,6 @@ class _ClaimDialogState extends State<ClaimDialog> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildWalletHelpSection(theme),
-                  const SizedBox(height: 24),
                   Text(
                     'Content ID or URL',
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -353,6 +351,8 @@ class _ClaimDialogState extends State<ClaimDialog> {
                     keyboardType: TextInputType.text,
                     textInputAction: TextInputAction.done,
                   ),
+                  const SizedBox(height: 24),
+                  _buildWalletHelpSection(theme),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
