@@ -230,58 +230,114 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
     const double maxDialogWidth = 400.0;
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
-    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final double dialogWidth =
         (screenWidth > maxDialogWidth + 48) ? maxDialogWidth : screenWidth - 48;
 
-    // Calculate available height, accounting for keyboard and dialog chrome
-    final double availableHeight = screenHeight -
-        keyboardHeight -
-        200; // 200px for title, actions, padding
-
-    return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-      title: Text(_bountyCreationResponse == null
-          ? 'Create Bounty'
-          : 'Fund Your Bounty'),
-      content: SizedBox(
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
         width: dialogWidth,
-        height: availableHeight > 300
-            ? null
-            : availableHeight, // Constrain height if keyboard is up
-        child: _bountyCreationResponse == null
-            ? _buildFormView()
-            : SingleChildScrollView(
-                child: FundingQrContent(
-                  bountyId: _bountyCreationResponse!['bounty_id'],
-                  totalCharged:
-                      (_bountyCreationResponse!['total_charged'] as num)
-                          .toDouble(),
-                  paymentTimeoutExpiresAt: DateTime.parse(
-                      _bountyCreationResponse!['payment_timeout_expires_at']),
-                  walletAddress: _config!['escrow_wallet'],
-                  usdcMintAddress: _config!['usdc_mint_address'],
-                  showActions: true,
-                  onDone: () => Navigator.of(context).pop(),
-                ),
-              ),
-      ),
-      actions: _bountyCreationResponse == null
-          ? [
-              TextButton(
+        constraints: BoxConstraints(
+          maxHeight: screenHeight * 0.9,
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          resizeToAvoidBottomInset: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: const SizedBox.shrink(),
+            title: Text(
+              _bountyCreationResponse == null
+                  ? 'Create Bounty'
+                  : 'Fund Your Bounty',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.close),
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
               ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submitForm,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Submit'),
-              ),
-            ]
-          : [],
+            ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: _bountyCreationResponse == null
+                ? _buildFormView()
+                : SingleChildScrollView(
+                    child: FundingQrContent(
+                      bountyId: _bountyCreationResponse!['bounty_id'],
+                      totalCharged:
+                          (_bountyCreationResponse!['total_charged'] as num)
+                              .toDouble(),
+                      paymentTimeoutExpiresAt: DateTime.parse(
+                          _bountyCreationResponse![
+                              'payment_timeout_expires_at']),
+                      walletAddress: _config!['escrow_wallet'],
+                      usdcMintAddress: _config!['usdc_mint_address'],
+                      showActions: true,
+                      onDone: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+          ),
+          bottomNavigationBar: _bountyCreationResponse == null
+              ? Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    border: Border(
+                      top: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _submitForm,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('Submit'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : null,
+        ),
+      ),
     );
   }
 
