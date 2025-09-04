@@ -38,19 +38,23 @@ class _EditRequirementsScreenState extends State<EditRequirementsScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: TextField(
-          controller: _textController,
-          autofocus: true,
-          maxLines: null, // Allows for unlimited lines
-          expands: true, // Expands to fill available space
-          keyboardType: TextInputType.multiline,
-          decoration: const InputDecoration(
-            border: InputBorder.none,
-            hintText: 'Enter your bounty requirements...',
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: TextField(
+            controller: _textController,
+            autofocus: true,
+            maxLines: null, // Allows for unlimited lines
+            expands: true, // Expands to fill available space
+            keyboardType: TextInputType.multiline,
+            textAlignVertical: TextAlignVertical.top,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              hintText: 'Enter your bounty requirements...',
+              contentPadding: EdgeInsets.fromLTRB(16, 20, 16, 20),
+            ),
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
         ),
       ),
     );

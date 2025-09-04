@@ -256,6 +256,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 16),
             FormField<String>(
               validator: (value) {
                 if (_requirementsController.text.trim().isEmpty) {
