@@ -307,9 +307,12 @@ class _ClaimDialogState extends State<ClaimDialog> {
                         filled: true,
                         fillColor: theme.colorScheme.surface,
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                            horizontal: 16, vertical: 18),
+                        isDense: false,
                       ),
-                      style: theme.textTheme.bodyLarge,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        height: 1.2, // Better line height for touch targets
+                      ),
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
                       scrollPadding: const EdgeInsets.all(80.0),
@@ -360,9 +363,12 @@ class _ClaimDialogState extends State<ClaimDialog> {
                         filled: true,
                         fillColor: theme.colorScheme.surface,
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                            horizontal: 16, vertical: 18),
+                        isDense: false,
                       ),
-                      style: theme.textTheme.bodyLarge,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        height: 1.2, // Better line height for touch targets
+                      ),
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.done,
                       scrollPadding: const EdgeInsets.all(80.0),

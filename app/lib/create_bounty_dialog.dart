@@ -327,6 +327,11 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 ),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                alignLabelWithHint: true,
               ),
               maxLength: 4000,
               maxLines: 8,
@@ -335,7 +340,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
               autovalidateMode: AutovalidateMode.onUserInteraction,
               scrollPadding: const EdgeInsets.all(80.0),
               textInputAction: TextInputAction.newline,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    height: 1.4, // Better line height for touch targets
+                  ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter requirements';
@@ -461,6 +468,10 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 ),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 18,
+                ),
               ),
               maxLength: 10, // Allows for amounts up to 9,999,999.99
               keyboardType:
@@ -471,7 +482,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
               autovalidateMode: AutovalidateMode.onUserInteraction,
               scrollPadding: const EdgeInsets.all(80.0),
               textInputAction: TextInputAction.next,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    height: 1.2, // Better line height for single line fields
+                  ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a value';
@@ -510,13 +523,19 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 ),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 18,
+                ),
               ),
               maxLength: 6, // Allows for up to 999,999 bounties
               keyboardType: TextInputType.number,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               scrollPadding: const EdgeInsets.all(80.0),
               textInputAction: TextInputAction.done,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    height: 1.2, // Better line height for single line fields
+                  ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a value';
