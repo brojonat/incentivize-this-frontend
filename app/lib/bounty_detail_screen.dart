@@ -251,6 +251,8 @@ class _BountyDetailScreenState extends State<BountyDetailScreen> {
           slivers: <Widget>[
             SliverAppBar(
               title: Text(bounty.title),
+              backgroundColor: theme.colorScheme.surface,
+              surfaceTintColor: Colors.transparent,
               floating: true,
               pinned: true,
               snap: true,
