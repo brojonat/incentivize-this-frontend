@@ -59,9 +59,7 @@ class _ClaimDialogState extends State<ClaimDialog> {
   }
 
   void _scrollToFocusedField() {
-    // This is a more robust way to scroll to the focused field.
-    // It waits for the frame to be rendered *after* the focus change,
-    // and then uses Scrollable.ensureVisible to make sure the field is in view.
+    // Immediate scroll to focused field with better positioning
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
@@ -73,12 +71,17 @@ class _ClaimDialogState extends State<ClaimDialog> {
       }
 
       if (focusedNode != null && focusedNode.context != null) {
-        Scrollable.ensureVisible(
-          focusedNode.context!,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-          alignment: 0.1, // Aligns the field near the top of the visible area
-        );
+        // Add a small delay to ensure keyboard is fully visible
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted && focusedNode!.context != null) {
+            Scrollable.ensureVisible(
+              focusedNode.context!,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              alignment: 0.2, // Position field higher up to avoid keyboard
+            );
+          }
+        });
       }
     });
   }
@@ -211,216 +214,231 @@ class _ClaimDialogState extends State<ClaimDialog> {
             ),
           ],
         ),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          resizeToAvoidBottomInset: true,
-          body: SingleChildScrollView(
-            controller: _scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.assignment_turned_in,
-                        color: theme.colorScheme.primary,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Claim Bounty',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            textSelectionTheme: TextSelectionThemeData(
+              cursorColor: theme.colorScheme.primary,
+              selectionColor: theme.colorScheme.primary.withOpacity(0.2),
+              selectionHandleColor: theme.colorScheme.primary,
+            ),
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            resizeToAvoidBottomInset: true,
+            body: SingleChildScrollView(
+              controller: _scrollController,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.assignment_turned_in,
+                          color: theme.colorScheme.primary,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Claim Bounty',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.close,
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        IconButton(
+                          icon: Icon(
+                            Icons.close,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(),
                         ),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Content ID or URL',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onSurface,
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _contentIdController,
-                    focusNode: _contentIdFocusNode,
-                    decoration: InputDecoration(
-                      labelText: 'Content ID or URL',
-                      hintText: 'Enter the content ID or URL',
-                      errorText: _contentIdError ?? _parsingError,
-                      prefixIcon: Icon(
-                        Icons.insert_drive_file_outlined,
-                        color: theme.colorScheme.primary,
+                    const SizedBox(height: 16),
+                    Text(
+                      'Content ID or URL',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: theme.colorScheme.outline),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: theme.colorScheme.outline),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: theme.colorScheme.primary, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.error),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: theme.colorScheme.error, width: 2),
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
                     ),
-                    style: theme.textTheme.bodyLarge,
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Wallet Address',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onSurface,
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _contentIdController,
+                      focusNode: _contentIdFocusNode,
+                      decoration: InputDecoration(
+                        labelText: 'Content ID or URL',
+                        hintText: 'Enter the content ID or URL',
+                        errorText: _contentIdError ?? _parsingError,
+                        prefixIcon: Icon(
+                          Icons.insert_drive_file_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.outline),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.outline),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.primary, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.error),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.error, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                      style: theme.textTheme.bodyLarge,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.next,
+                      scrollPadding: const EdgeInsets.all(80.0),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _walletAddressController,
-                    focusNode: _walletAddressFocusNode,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your wallet address',
-                      errorText: _walletAddressError,
-                      prefixIcon: Icon(
-                        Icons.account_balance_wallet_outlined,
-                        color: theme.colorScheme.primary,
+                    const SizedBox(height: 16),
+                    Text(
+                      'Wallet Address',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: theme.colorScheme.outline),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: theme.colorScheme.outline),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: theme.colorScheme.primary, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.error),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: theme.colorScheme.error, width: 2),
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
                     ),
-                    style: theme.textTheme.bodyLarge,
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.done,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildWalletHelpSection(theme),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _walletAddressController,
+                      focusNode: _walletAddressFocusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your wallet address',
+                        errorText: _walletAddressError,
+                        prefixIcon: Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.outline),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.outline),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.primary, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.error),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.error, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                      style: theme.textTheme.bodyLarge,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.done,
+                      scrollPadding: const EdgeInsets.all(80.0),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildWalletHelpSection(theme),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => Navigator.of(context).pop(),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ),
-                        child: Text(
-                          'Cancel',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.primary,
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: _isSubmitting ? null : _validate,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: _isSubmitting ? null : _validate,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isSubmitting
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    theme.colorScheme.onPrimary,
-                                  ),
-                                ),
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.send,
-                                    size: 16,
-                                    color: theme.colorScheme.onPrimary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Submit Claim',
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                      color: theme.colorScheme.onPrimary,
-                                      fontWeight: FontWeight.bold,
+                          child: _isSubmitting
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.colorScheme.onPrimary,
                                     ),
                                   ),
-                                ],
-                              ),
-                      ),
-                    ],
-                  ),
-                ],
+                                )
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.send,
+                                      size: 16,
+                                      color: theme.colorScheme.onPrimary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Submit Claim',
+                                      style:
+                                          theme.textTheme.labelLarge?.copyWith(
+                                        color: theme.colorScheme.onPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
