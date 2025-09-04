@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app/api_service.dart';
 import 'package:app/auth_prompt_dialog.dart';
+import 'package:app/edit_requirements_screen.dart';
 import 'package:app/funding_qr_dialog.dart';
 import 'package:app/notification_service.dart';
 import 'package:app/storage_service.dart';
@@ -118,6 +119,23 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           });
         }
       }
+    }
+  }
+
+  Future<void> _editRequirements() async {
+    final newRequirements = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => EditRequirementsScreen(
+          initialValue: _requirementsController.text,
+        ),
+        fullscreenDialog: true,
+      ),
+    );
+
+    if (newRequirements != null) {
+      setState(() {
+        _requirementsController.text = newRequirements;
+      });
     }
   }
 
@@ -238,25 +256,77 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
-              controller: _requirementsController,
-              decoration: const InputDecoration(
-                labelText: 'Requirements',
-                counterText: '', // Hide the character counter
-              ),
-              maxLength: 4000,
-              maxLines: 15,
-              minLines: 5,
-              keyboardType: TextInputType.multiline,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              scrollPadding: const EdgeInsets.all(40.0),
-              cursorWidth: 3.0,
-              cursorRadius: const Radius.circular(2.0),
+            FormField<String>(
               validator: (value) {
-                if (value == null || value.isEmpty) {
+                if (_requirementsController.text.trim().isEmpty) {
                   return 'Please enter requirements';
                 }
                 return null;
+              },
+              builder: (state) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      onTap: _editRequirements,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Requirements',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                        ),
+                        child: _requirementsController.text.isEmpty
+                            ? Text(
+                                'Tap to enter requirements...',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      color: Theme.of(context).hintColor,
+                                    ),
+                              )
+                            : Text(
+                                _requirementsController.text,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                maxLines: 8,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                      ),
+                    ),
+                    if (state.hasError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                        child: Text(
+                          state.errorText!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
               },
             ),
             const SizedBox(height: 8),
