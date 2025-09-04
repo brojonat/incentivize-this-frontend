@@ -123,19 +123,58 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
   }
 
   Future<void> _editRequirements() async {
-    final newRequirements = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (context) => EditRequirementsScreen(
-          initialValue: _requirementsController.text,
-        ),
-        fullscreenDialog: true,
-      ),
-    );
+    const double mobileBreakpoint = 700;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    if (newRequirements != null) {
-      setState(() {
-        _requirementsController.text = newRequirements;
-      });
+    if (screenWidth < mobileBreakpoint) {
+      // On mobile, use the full-screen editor
+      final newRequirements = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (context) => EditRequirementsScreen(
+            initialValue: _requirementsController.text,
+          ),
+          fullscreenDialog: true,
+        ),
+      );
+      if (newRequirements != null) {
+        setState(() {
+          _requirementsController.text = newRequirements;
+        });
+      }
+    } else {
+      // On desktop, use a dialog
+      final editorKey = GlobalKey<EditRequirementsContentState>();
+      final newRequirements = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Edit Requirements'),
+          content: SizedBox(
+            width: 600,
+            height: 400,
+            child: EditRequirementsContent(
+              key: editorKey,
+              initialValue: _requirementsController.text,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(editorKey.currentState?.currentText);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      );
+      if (newRequirements != null) {
+        setState(() {
+          _requirementsController.text = newRequirements;
+        });
+      }
     }
   }
 
