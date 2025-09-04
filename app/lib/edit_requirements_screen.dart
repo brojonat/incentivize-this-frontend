@@ -53,6 +53,7 @@ class EditRequirementsContent extends StatefulWidget {
 
 class EditRequirementsContentState extends State<EditRequirementsContent> {
   late final TextEditingController _textController;
+  final FocusNode _focusNode = FocusNode();
 
   String get currentText => _textController.text;
 
@@ -60,11 +61,16 @@ class EditRequirementsContentState extends State<EditRequirementsContent> {
   void initState() {
     super.initState();
     _textController = TextEditingController(text: widget.initialValue);
+    // Programmatically request focus after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
   }
 
   @override
   void dispose() {
     _textController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -72,7 +78,7 @@ class EditRequirementsContentState extends State<EditRequirementsContent> {
   Widget build(BuildContext context) {
     return TextField(
       controller: _textController,
-      autofocus: true,
+      focusNode: _focusNode,
       maxLines: null, // Allows for unlimited lines
       expands: true, // Expands to fill available space
       keyboardType: TextInputType.multiline,
