@@ -281,18 +281,20 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
             child: _bountyCreationResponse == null
                 ? _buildFormView()
                 : SingleChildScrollView(
-                    child: FundingQrContent(
-                      bountyId: _bountyCreationResponse!['bounty_id'],
-                      totalCharged:
-                          (_bountyCreationResponse!['total_charged'] as num)
-                              .toDouble(),
-                      paymentTimeoutExpiresAt: DateTime.parse(
-                          _bountyCreationResponse![
-                              'payment_timeout_expires_at']),
-                      walletAddress: _config!['escrow_wallet'],
-                      usdcMintAddress: _config!['usdc_mint_address'],
-                      showActions: true,
-                      onDone: () => Navigator.of(context).pop(),
+                    child: Center(
+                      child: FundingQrContent(
+                        bountyId: _bountyCreationResponse!['bounty_id'],
+                        totalCharged:
+                            (_bountyCreationResponse!['total_charged'] as num)
+                                .toDouble(),
+                        paymentTimeoutExpiresAt: DateTime.parse(
+                            _bountyCreationResponse![
+                                'payment_timeout_expires_at']),
+                        walletAddress: _config!['escrow_wallet'],
+                        usdcMintAddress: _config!['usdc_mint_address'],
+                        showActions: true,
+                        onDone: () => Navigator.of(context).pop(),
+                      ),
                     ),
                   ),
           ),

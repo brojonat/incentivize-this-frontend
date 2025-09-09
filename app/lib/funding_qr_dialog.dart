@@ -111,6 +111,7 @@ class _FundingQrContentState extends State<FundingQrContent> {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (_timeRemaining == null)
           const Text(
@@ -182,8 +183,7 @@ class FundingQrDialog extends StatelessWidget {
       actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600.0),
-        child: SizedBox(
-          width: double.maxFinite,
+        child: Center(
           child: SingleChildScrollView(
             child: FundingQrContent(
               bountyId: bountyId,
