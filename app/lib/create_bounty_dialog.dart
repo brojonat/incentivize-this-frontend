@@ -27,6 +27,8 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
   bool _isLoading = false;
   bool _isHardening = false;
   String _selectedDuration = '30d';
+  double _bountyFunding = 0.0;
+  double _platformFee = 0.0;
   double _totalCost = 0.0;
 
   Map<String, dynamic>? _bountyCreationResponse;
@@ -59,7 +61,9 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
     final perPost = double.tryParse(_perPostController.text) ?? 0;
     final numBounties = int.tryParse(_numberOfBountiesController.text) ?? 0;
     setState(() {
-      _totalCost = 2 * numBounties * perPost;
+      _bountyFunding = perPost * numBounties;
+      _platformFee = perPost * numBounties;
+      _totalCost = _bountyFunding + _platformFee;
     });
   }
 
@@ -300,7 +304,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           ),
           bottomNavigationBar: _bountyCreationResponse == null
               ? Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     border: Border(
@@ -353,7 +357,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             FormField<String>(
               validator: (value) {
                 if (_requirementsController.text.trim().isEmpty) {
@@ -427,7 +431,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 );
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -521,7 +525,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
             TextFormField(
               controller: _perPostController,
               decoration: const InputDecoration(
@@ -549,7 +553,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _numberOfBountiesController,
               decoration: const InputDecoration(
@@ -572,7 +576,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             const Text('Duration',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -592,11 +596,47 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                 )
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
-              'Total Cost: \$${_totalCost.toStringAsFixed(2)}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              'Cost Breakdown',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Bounty Payouts'),
+                Text('\$${_bountyFunding.toStringAsFixed(2)}'),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Platform Fee'),
+                Text('\$${_platformFee.toStringAsFixed(2)}'),
+              ],
+            ),
+            const Divider(height: 20, thickness: 1),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Total Due',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        )),
+                Text(
+                  '\$${_totalCost.toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+
             // Add bottom padding to ensure last field is accessible when keyboard is up
             SizedBox(
                 height: MediaQuery.of(context).viewInsets.bottom > 0 ? 50 : 0),
