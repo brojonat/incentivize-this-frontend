@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'responsive_layout.dart';
+
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
@@ -22,81 +24,109 @@ class AboutScreen extends StatelessWidget {
           },
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome to IncentivizeThis! 🥕',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
+      body: CenteredConstrainedView(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome to IncentivizeThis! 🥕',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle(theme, 'Our Goal'),
-            const SizedBox(height: 12),
-            Text(
-              'We help businesses dangle carrots in front of creators who can rise to the occasion and snag a bite!',
-              style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle(theme, 'How It Works'),
-            const SizedBox(height: 12),
-            _buildStep(
-              theme,
-              icon: Icons.list_alt_rounded,
-              title: '1. Discover Bounties',
-              description:
-                  'Browse available bounties. Each bounty has a reward for content that meets specific requirements.',
-            ),
-            const SizedBox(height: 16),
-            _buildStep(
-              theme,
-              icon: Icons.link_rounded,
-              title: '2. Submit Your Content',
-              description:
-                  'Found a bounty you can fulfill? Great! Create your content and submit a link to it through our platform.',
-            ),
-            const SizedBox(height: 16),
-            _buildStep(
-              theme,
-              icon: Icons.account_balance_wallet_rounded,
-              title: '3. Get Paid!',
-              description:
-                  'We\'ll review your submission and if it fulfills the bounty, we\'ll send the reward to your wallet. It\'s that simple!',
-            ),
-            const SizedBox(height: 32),
-            Center(
-              child: Column(
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.home_rounded),
-                    label: const Text('Explore Bounties'),
-                    onPressed: () => context.go('/bounties'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      textStyle: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.forum_rounded),
-                    label: const Text('Have questions? Join our Discord!'),
-                    onPressed: () =>
-                        _launchUrl('https://discord.gg/Sut96XYkKg'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      textStyle: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 24),
+              _buildSectionTitle(theme, 'Our Goal'),
+              const SizedBox(height: 12),
+              Text(
+                "We're the bridge between innovative businesses and the creators who can get them the visibility they want.",
+                style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              _buildSectionTitle(theme, 'For Businesses: Create a Bounty'),
+              const SizedBox(height: 12),
+              _buildStep(
+                theme,
+                icon: Icons.add_circle_outline_rounded,
+                title: '1. Create Your Bounty',
+                description:
+                    "Click the '+' button on the home screen, define your content requirements, and set a reward.",
+              ),
+              const SizedBox(height: 16),
+              _buildStep(
+                theme,
+                icon: Icons.attach_money_rounded,
+                title: '2. Fund It',
+                description:
+                    'Deposit funds to cover the rewards. Your bounty becomes active once funded.',
+              ),
+              const SizedBox(height: 16),
+              _buildStep(
+                theme,
+                icon: Icons.rate_review_rounded,
+                title: '3. Enjoy Your New Customers',
+                description:
+                    'Creators will fulfill your bounty, increasing your audience reach, and bringing you new customers.',
+              ),
+              const SizedBox(height: 24),
+              _buildSectionTitle(theme, 'For Creators: Fulfill a Bounty'),
+              const SizedBox(height: 12),
+              _buildStep(
+                theme,
+                icon: Icons.list_alt_rounded,
+                title: '1. Discover Bounties',
+                description:
+                    'Browse available bounties. Each bounty has a reward for content that meets specific requirements.',
+              ),
+              const SizedBox(height: 16),
+              _buildStep(
+                theme,
+                icon: Icons.link_rounded,
+                title: '2. Submit Your Content',
+                description:
+                    'Found a bounty you can fulfill? Great! Create your content and submit a link to it through our platform.',
+              ),
+              const SizedBox(height: 16),
+              _buildStep(
+                theme,
+                icon: Icons.account_balance_wallet_rounded,
+                title: '3. Get Paid!',
+                description:
+                    'We\'ll review your submission and if it fulfills the bounty, we\'ll send the reward to your wallet. It\'s that simple!',
+              ),
+              const SizedBox(height: 32),
+              Center(
+                child: Column(
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.home_rounded),
+                      label: const Text('Explore Bounties'),
+                      onPressed: () => context.go('/bounties'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        textStyle: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.forum_rounded),
+                      label: const Text('Have questions? Join our Discord!'),
+                      onPressed: () =>
+                          _launchUrl('https://discord.gg/Sut96XYkKg'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        textStyle: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
