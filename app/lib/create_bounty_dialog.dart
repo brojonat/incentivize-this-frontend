@@ -185,7 +185,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
   Future<void> _hardenRequirements() async {
     final current = _requirementsController.text;
     if (current.trim().isEmpty) {
-      NotificationService.showError('Enter requirements to refine.');
+      NotificationService.showError('Enter requirements to harden.');
       return;
     }
 
@@ -204,7 +204,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           TextPosition(offset: _requirementsController.text.length),
         );
       });
-      NotificationService.showSuccess('Requirements refined.');
+      NotificationService.showSuccess('Requirements hardened.');
     } catch (e) {
       if (e.toString().contains('ApiUnauthorizedException')) {
         if (!mounted) return;
@@ -218,7 +218,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
           ),
         );
       } else {
-        NotificationService.showError('Failed to refine: $e');
+        NotificationService.showError('Failed to harden: $e');
       }
     } finally {
       if (mounted) {
@@ -512,7 +512,7 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
                               ),
                             ),
                       label: Text(
-                        _isHardening ? 'Refining…' : 'Refine',
+                        _isHardening ? 'Hardening…' : 'Harden',
                         style: TextStyle(
                           color: _isHardening
                               ? Colors.white
