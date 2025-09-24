@@ -46,7 +46,17 @@ class _HomeScreenState extends State<HomeScreen>
   Set<String> _selectedPlatforms = {};
   double? _minRewardFilter;
   double? _maxRewardFilter;
-  String? _funderWalletFilter;
+
+  // Sorting state
+  String _sortBy = 'creation_time'; // Default sort
+  String _sortOrder = 'DESC';
+
+  final Map<String, ({String sortBy, String order})> _sortOptions = {
+    'Newest': (sortBy: 'creation_time', order: 'DESC'),
+    'Ending Soon': (sortBy: 'time_remaining', order: 'ASC'),
+    'Highest Reward (Per Post)': (sortBy: 'per_post_amount', order: 'DESC'),
+    'Highest Reward (Total)': (sortBy: 'total_amount', order: 'DESC'),
+  };
 
   @override
   void initState() {
@@ -131,8 +141,10 @@ class _HomeScreenState extends State<HomeScreen>
         fetchedBounties = await _apiService.searchBounties(_activeSearchQuery!);
       } else {
         // Fetch all bounties, potentially with a funder wallet filter
-        fetchedBounties =
-            await _apiService.fetchBounties(funderWallet: _funderWalletFilter);
+        fetchedBounties = await _apiService.fetchBounties(
+          sortBy: _sortBy,
+          order: _sortOrder,
+        );
       }
 
       // Fetch paid bounties (only if not searching, or decide if search should also refresh this)
@@ -234,7 +246,8 @@ class _HomeScreenState extends State<HomeScreen>
       _selectedPlatforms.clear();
       _minRewardFilter = null;
       _maxRewardFilter = null;
-      _funderWalletFilter = null;
+      _sortBy = 'creation_time';
+      _sortOrder = 'DESC';
     });
     _loadData(isInitialLoad: true);
   }
@@ -258,10 +271,16 @@ class _HomeScreenState extends State<HomeScreen>
       orElse: () => rewardRanges.keys.first,
     );
 
+    String currentSortKey = _sortOptions.keys.firstWhere(
+      (key) =>
+          _sortOptions[key]!.sortBy == _sortBy &&
+          _sortOptions[key]!.order == _sortOrder,
+      orElse: () => _sortOptions.keys.first,
+    );
+
     Set<String> tempSelectedPlatforms = Set.from(_selectedPlatforms);
     String tempRewardRangeKey = currentRewardRangeKey;
-    TextEditingController funderWalletController =
-        TextEditingController(text: _funderWalletFilter);
+    String tempSortKey = currentSortKey;
 
     showModalBottomSheet(
       context: context,
@@ -289,6 +308,45 @@ class _HomeScreenState extends State<HomeScreen>
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 16),
+                    Text(
+                      'Sort By',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
+                      children: _sortOptions.keys.map((key) {
+                        return ChoiceChip(
+                          label: Text(
+                            key,
+                            style: tempSortKey == key
+                                ? TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  )
+                                : TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                          ),
+                          selected: tempSortKey == key,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() {
+                                tempSortKey = key;
+                              });
+                            }
+                          },
+                          selectedColor:
+                              Theme.of(context).colorScheme.primaryContainer,
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
                     Text(
                       'Platform',
                       style: Theme.of(context).textTheme.titleMedium,
@@ -358,34 +416,6 @@ class _HomeScreenState extends State<HomeScreen>
                       }).toList(),
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      'Filter by Funder Wallet (Optional)',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: funderWalletController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter wallet address...',
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        suffixIcon: funderWalletController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  setModalState(
-                                      () => funderWalletController.clear());
-                                },
-                              )
-                            : null,
-                      ),
-                      onChanged: (value) {
-                        setModalState(() {}); // Rebuild to show/hide clear icon
-                      },
-                    ),
-                    const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -394,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen>
                             setModalState(() {
                               tempSelectedPlatforms.clear();
                               tempRewardRangeKey = rewardRanges.keys.first;
-                              funderWalletController.clear();
+                              tempSortKey = _sortOptions.keys.first;
                             });
                           },
                           child: const Text('Reset All'),
@@ -408,8 +438,8 @@ class _HomeScreenState extends State<HomeScreen>
                                   rewardRanges[tempRewardRangeKey]?.min;
                               _maxRewardFilter =
                                   rewardRanges[tempRewardRangeKey]?.max;
-                              _funderWalletFilter =
-                                  funderWalletController.text.trim();
+                              _sortBy = _sortOptions[tempSortKey]!.sortBy;
+                              _sortOrder = _sortOptions[tempSortKey]!.order;
                             });
                             Navigator.pop(context);
                             // Now, trigger a reload from the backend with the new filters.
@@ -561,8 +591,8 @@ class _HomeScreenState extends State<HomeScreen>
               _selectedPlatforms.isNotEmpty ||
                       _minRewardFilter != null ||
                       _maxRewardFilter != null ||
-                      (_funderWalletFilter != null &&
-                          _funderWalletFilter!.isNotEmpty)
+                      _sortBy != 'creation_time' ||
+                      _sortOrder != 'DESC'
                   ? Icons.filter_list_off_outlined
                   : Icons.filter_list,
               color: theme.colorScheme.primary,
@@ -646,7 +676,8 @@ class _HomeScreenState extends State<HomeScreen>
     bool filtersAreActive = _selectedPlatforms.isNotEmpty ||
         _minRewardFilter != null ||
         _maxRewardFilter != null ||
-        (_funderWalletFilter != null && _funderWalletFilter!.isNotEmpty);
+        _sortBy != 'creation_time' ||
+        _sortOrder != 'DESC';
 
     if (noActiveBounties && (noPaidBounties || isSearching)) {
       return Center(
@@ -836,7 +867,8 @@ class _HomeScreenState extends State<HomeScreen>
     bool filtersActive = _selectedPlatforms.isNotEmpty ||
         _minRewardFilter != null ||
         _maxRewardFilter != null ||
-        (_funderWalletFilter != null && _funderWalletFilter!.isNotEmpty);
+        _sortBy != 'creation_time' ||
+        _sortOrder != 'DESC';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),

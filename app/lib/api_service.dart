@@ -52,11 +52,18 @@ class ApiService {
   }
 
   // Fetch all bounties
-  Future<List<Bounty>> fetchBounties({String? funderWallet}) async {
+  Future<List<Bounty>> fetchBounties({String? sortBy, String? order}) async {
     try {
       var uri = Uri.parse('$baseUrl/bounties');
-      if (funderWallet != null && funderWallet.isNotEmpty) {
-        uri = uri.replace(queryParameters: {'funder_wallet': funderWallet});
+      final Map<String, String> queryParameters = {};
+      if (sortBy != null && sortBy.isNotEmpty) {
+        queryParameters['sort_by'] = sortBy;
+      }
+      if (order != null && order.isNotEmpty) {
+        queryParameters['order'] = order;
+      }
+      if (queryParameters.isNotEmpty) {
+        uri = uri.replace(queryParameters: queryParameters);
       }
 
       final response = await _client.get(
