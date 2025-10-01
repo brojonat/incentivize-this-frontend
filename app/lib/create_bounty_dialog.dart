@@ -435,93 +435,98 @@ class _CreateBountyDialogState extends State<CreateBountyDialog>
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    AnimatedBuilder(
-                      animation: _glowAnimation,
-                      builder: (context, child) {
-                        final Color color1, color2;
-                        if (_isHardening) {
-                          color1 = Color.lerp(Colors.grey.shade600,
-                              Colors.grey.shade800, _glowAnimation.value)!;
-                          color2 = Color.lerp(Colors.grey.shade800,
-                              Colors.grey.shade600, _glowAnimation.value)!;
-                        } else {
-                          color1 = Color.lerp(
-                              const Color.fromARGB(255, 0, 31, 124),
-                              const Color.fromARGB(255, 126, 26, 209),
-                              _glowAnimation.value)!;
-                          color2 = Color.lerp(
-                              const Color.fromARGB(255, 126, 26, 209),
-                              const Color.fromARGB(255, 0, 31, 124),
-                              _glowAnimation.value)!;
-                        }
+                Tooltip(
+                  message:
+                      'Strengthens your bounty requirements to prevent common exploits.',
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      AnimatedBuilder(
+                        animation: _glowAnimation,
+                        builder: (context, child) {
+                          final Color color1, color2;
+                          if (_isHardening) {
+                            color1 = Color.lerp(Colors.grey.shade600,
+                                Colors.grey.shade800, _glowAnimation.value)!;
+                            color2 = Color.lerp(Colors.grey.shade800,
+                                Colors.grey.shade600, _glowAnimation.value)!;
+                          } else {
+                            color1 = Color.lerp(
+                                const Color.fromARGB(255, 0, 31, 124),
+                                const Color.fromARGB(255, 126, 26, 209),
+                                _glowAnimation.value)!;
+                            color2 = Color.lerp(
+                                const Color.fromARGB(255, 126, 26, 209),
+                                const Color.fromARGB(255, 0, 31, 124),
+                                _glowAnimation.value)!;
+                          }
 
-                        return Container(
-                          width: 90, // Give a fixed width to the container
-                          height: 24, // Give a fixed height
-                          decoration: BoxDecoration(
+                          return Container(
+                            width: 90, // Give a fixed width to the container
+                            height: 24, // Give a fixed height
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              gradient: LinearGradient(
+                                colors: [color1, color2],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: _isHardening ? null : _hardenRequirements,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize:
+                              const Size(120, 48), // Match the container size
+                          backgroundColor: Colors.transparent,
+                          disabledBackgroundColor: Colors
+                              .transparent, // Keep transparent when disabled
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
-                            gradient: LinearGradient(
-                              colors: [color1, color2],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
-                        );
-                      },
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _isHardening ? null : _hardenRequirements,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize:
-                            const Size(120, 48), // Match the container size
-                        backgroundColor: Colors.transparent,
-                        disabledBackgroundColor: Colors
-                            .transparent, // Keep transparent when disabled
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      icon: _isHardening
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : ShaderMask(
-                              shaderCallback: (bounds) => const LinearGradient(
-                                colors: [
-                                  Color.fromARGB(255, 238, 255, 108),
-                                  Color.fromARGB(255, 255, 240, 78)
-                                ],
-                              ).createShader(bounds),
-                              child: const Text(
-                                '✨',
-                                style: TextStyle(fontSize: 20),
+                        icon: _isHardening
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                  colors: [
+                                    Color.fromARGB(255, 238, 255, 108),
+                                    Color.fromARGB(255, 255, 240, 78)
+                                  ],
+                                ).createShader(bounds),
+                                child: const Text(
+                                  '✨',
+                                  style: TextStyle(fontSize: 20),
+                                ),
                               ),
-                            ),
-                      label: Text(
-                        _isHardening ? 'Hardening…' : 'Harden',
-                        style: TextStyle(
-                          color: _isHardening
-                              ? Colors.white
-                              : const Color.fromARGB(255, 243, 242, 241),
-                          fontWeight: FontWeight.bold,
+                        label: Text(
+                          _isHardening ? 'Hardening…' : 'Harden',
+                          style: TextStyle(
+                            color: _isHardening
+                                ? Colors.white
+                                : const Color.fromARGB(255, 243, 242, 241),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
